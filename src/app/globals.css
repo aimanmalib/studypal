@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mimo-primary: #f97316;
+  --mimo-bg: #0f172a;
+  --mimo-surface: #1e293b;
+  --mimo-text: #f8fafc;
+  --mimo-muted: #94a3b8;
+}
+
+body {
+  background: var(--mimo-bg);
+  color: var(--mimo-text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+  }
+  .gradient-border {
+    @apply border border-transparent bg-clip-padding;
+    background-image: linear-gradient(var(--mimo-surface), var(--mimo-surface)),
+                      linear-gradient(135deg, #f97316, #fb923c, #fdba74);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+}
+
+/* Streaming text animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: '\2588';
+  animation: blink 1s infinite;
+  color: var(--mimo-primary);
+}
+
+/* Markdown content styling */
+.prose-mimo h1 { @apply text-2xl font-bold mb-4 text-mimo-400; }
+.prose-mimo h2 { @apply text-xl font-semibold mb-3 text-mimo-300; }
+.prose-mimo h3 { @apply text-lg font-medium mb-2 text-mimo-200; }
+.prose-mimo p { @apply mb-3 leading-relaxed; }
+.prose-mimo ul { @apply list-disc pl-6 mb-3 space-y-1; }
+.prose-mimo ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+.prose-mimo code { @apply bg-slate-800 px-1.5 py-0.5 rounded text-sm text-mimo-400 font-mono; }
+.prose-mimo pre { @apply bg-slate-800 p-4 rounded-lg mb-3 overflow-x-auto; }
+.prose-mimo blockquote { @apply border-l-4 border-mimo-500 pl-4 italic text-slate-300; }
