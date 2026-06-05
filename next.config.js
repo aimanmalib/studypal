@@ -4,9 +4,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    serverActions: true,
-  },
   headers: async () => [
     {
       source: '/api/:path*',
