@@ -1,9 +1,17 @@
 /**
- * MiMo V2.5 Pro API Client
+ * OpenAI-compatible LLM API client.
  *
- * Uses api-key header (NOT Authorization: Bearer) per MiMo Token Plan spec.
- * Endpoint: https://token-plan-sgp.xiaomimimo.com/v1/chat/completions
- * Streaming: SSE with reasoning_content support
+ * Works with any provider that speaks the OpenAI `/chat/completions` protocol
+ * (OpenAI, OpenRouter, Ollama, llama.cpp, Xiaomi MiMo Token Plan, ...). The auth
+ * header style (bearer vs api-key) is chosen automatically from the selected
+ * provider preset.
+ *
+ * Configure with env vars:
+ *   LLM_PROVIDER   one of: openai | openrouter | ollama | mimo   (default: mimo)
+ *   LLM_API_KEY    API key for the chosen provider
+ *                  (legacy MIMO_API_KEY is still honored)
+ *   LLM_BASE_URL   override the provider's base URL (optional)
+ *   LLM_MODEL      override the default model (optional)
  */
 
 export interface ChatMessage {
@@ -33,8 +41,90 @@ export interface StreamChunk {
   finish_reason?: string;
 }
 
-const MIMO_BASE_URL = process.env.MIMO_BASE_URL || 'https://token-plan-sgp.xiaomimimo.com/v1';
-const MIMO_MODEL = process.env.MIMO_MODEL || 'mimo-v2.5-pro';
+type AuthStyle = 'bearer' | 'api-key';
+
+interface ProviderPreset {
+  baseUrl: string;
+  authStyle: AuthStyle;
+  model: string;
+  envKey: string;
+  envBase: string;
+}
+
+export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
+  mimo: {
+    baseUrl: 'https://token-plan-sgp.xiaomimimo.com/v1',
+    authStyle: 'api-key',
+    model: 'mimo-v2.5-pro',
+    envKey: 'MIMO_API_KEY',
+    envBase: 'MIMO_BASE_URL',
+  },
+  openai: {
+    baseUrl: 'https://api.openai.com/v1',
+    authStyle: 'bearer',
+    model: 'gpt-4o-mini',
+    envKey: 'OPENAI_API_KEY',
+    envBase: 'OPENAI_BASE_URL',
+  },
+  openrouter: {
+    baseUrl: 'https://openrouter.ai/api/v1',
+    authStyle: 'bearer',
+    model: 'openai/gpt-4o-mini',
+    envKey: 'OPENROUTER_API_KEY',
+    envBase: 'OPENROUTER_BASE_URL',
+  },
+  ollama: {
+    baseUrl: 'http://localhost:11434/v1',
+    authStyle: 'bearer',
+    model: 'llama3.1',
+    envKey: 'OLLAMA_API_KEY',
+    envBase: 'OLLAMA_BASE_URL',
+  },
+};
+
+export const DEFAULT_PROVIDER = 'mimo';
+
+export interface ResolvedLLMConfig {
+  provider: string;
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  authStyle: AuthStyle;
+}
+
+/** Resolve the active provider config from environment variables. */
+export function resolveConfig(): ResolvedLLMConfig {
+  const provider = process.env.LLM_PROVIDER || DEFAULT_PROVIDER;
+  const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS[DEFAULT_PROVIDER];
+
+  // Key precedence: explicit LLM_API_KEY > provider-specific env > legacy MIMO_API_KEY.
+  const apiKey =
+    process.env.LLM_API_KEY ||
+    process.env[preset.envKey] ||
+    process.env.MIMO_API_KEY ||
+    '';
+
+  const baseUrl =
+    process.env.LLM_BASE_URL ||
+    process.env[preset.envBase] ||
+    process.env.MIMO_BASE_URL ||
+    preset.baseUrl;
+
+  const model = process.env.LLM_MODEL || process.env.MIMO_MODEL || preset.model;
+
+  return { provider, apiKey, baseUrl, model, authStyle: preset.authStyle };
+}
+
+/** Build auth + content headers for the resolved provider. */
+export function buildHeaders(cfg: ResolvedLLMConfig): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (cfg.authStyle === 'bearer') {
+    headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+  } else {
+    headers['api-key'] = cfg.apiKey;
+  }
+  return headers;
+}
 
 export async function chatCompletion(
   messages: ChatMessage[],
@@ -45,17 +135,14 @@ export async function chatCompletion(
     stream?: boolean;
   }
 ): Promise<ChatResponse> {
-  const apiKey = process.env.MIMO_API_KEY;
-  if (!apiKey) throw new Error('MIMO_API_KEY not set');
+  const cfg = resolveConfig();
+  if (!cfg.apiKey) throw new Error('No LLM API key set (LLM_API_KEY or provider key)');
 
-  const response = await fetch(`${MIMO_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'api-key': apiKey,  // MiMo uses api-key, NOT Authorization: Bearer
-      'Content-Type': 'application/json',
-    },
+    headers: buildHeaders(cfg),
     body: JSON.stringify({
-      model: options?.model || MIMO_MODEL,
+      model: options?.model || cfg.model,
       messages,
       max_tokens: options?.max_tokens || 4096,
       temperature: options?.temperature ?? 0.7,
@@ -65,7 +152,7 @@ export async function chatCompletion(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`MiMo API error ${response.status}: ${text}`);
+    throw new Error(`LLM API error ${response.status}: ${text}`);
   }
 
   const data = await response.json();
@@ -94,17 +181,14 @@ export async function* streamCompletion(
     max_tokens?: number;
   }
 ): AsyncGenerator<StreamChunk> {
-  const apiKey = process.env.MIMO_API_KEY;
-  if (!apiKey) throw new Error('MIMO_API_KEY not set');
+  const cfg = resolveConfig();
+  if (!cfg.apiKey) throw new Error('No LLM API key set (LLM_API_KEY or provider key)');
 
-  const response = await fetch(`${MIMO_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'api-key': apiKey,
-      'Content-Type': 'application/json',
-    },
+    headers: buildHeaders(cfg),
     body: JSON.stringify({
-      model: options?.model || MIMO_MODEL,
+      model: options?.model || cfg.model,
       messages,
       max_tokens: options?.max_tokens || 4096,
       temperature: options?.temperature ?? 0.7,
@@ -113,7 +197,7 @@ export async function* streamCompletion(
   });
 
   if (!response.ok || !response.body) {
-    throw new Error(`MiMo API error: ${response.status}`);
+    throw new Error(`LLM API error: ${response.status}`);
   }
 
   const reader = response.body.getReader();
