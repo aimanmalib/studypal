@@ -1,10 +1,10 @@
 /**
  * System prompts for each StudyPal feature.
- * Optimized for MiMo V2.5 Pro's reasoning capabilities.
+ * Designed to work well with any capable instruction-following LLM.
  */
 
 export const SYSTEM_PROMPTS = {
-  chat: `You are StudyPal, an AI study assistant powered by MiMo V2.5 Pro.
+  chat: `You are StudyPal, an AI study assistant.
 Your role is to help students understand concepts, answer questions, and guide their learning.
 
 Guidelines:

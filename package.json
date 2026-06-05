@@ -1,7 +1,7 @@
 {
-  "name": "mimo-studypal",
+  "name": "studypal",
   "version": "1.0.0",
-  "description": "AI Study Assistant powered by Xiaomi MiMo V2.5 Pro — flashcards, quizzes, study plans, concept explanations",
+  "description": "AI Study Assistant for any OpenAI-compatible LLM — flashcards, quizzes, study plans, concept explanations",
   "private": true,
   "scripts": {
     "dev": "next dev",

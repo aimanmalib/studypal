@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a problem with StudyPal
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including any console/server errors.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Set LLM_PROVIDER to ...
+        2. Open /quiz and ...
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and model
+      placeholder: openai / gpt-4o-mini
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "20.x"
+    validations:
+      required: true

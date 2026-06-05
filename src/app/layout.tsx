@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'MiMo StudyPal — AI Study Assistant',
-  description: 'AI-powered study assistant with flashcards, quizzes, and personalized learning. Powered by Xiaomi MiMo V2.5 Pro.',
-  keywords: ['AI', 'study', 'flashcards', 'quiz', 'MiMo', 'Xiaomi', 'learning'],
+  title: 'StudyPal — AI Study Assistant',
+  description: 'AI-powered study assistant with flashcards, quizzes, and personalized learning. Runs on any OpenAI-compatible LLM.',
+  keywords: ['AI', 'study', 'flashcards', 'quiz', 'LLM', 'OpenAI', 'learning'],
   openGraph: {
-    title: 'MiMo StudyPal',
-    description: 'Your AI study companion powered by MiMo V2.5 Pro',
+    title: 'StudyPal',
+    description: 'Your AI study companion, powered by any OpenAI-compatible LLM',
     type: 'website',
   },
 };
@@ -28,7 +28,7 @@ export default function RootLayout({
               </div>
               <span className="font-semibold text-lg">StudyPal</span>
               <span className="text-xs text-mimo-400 bg-mimo-500/10 px-2 py-0.5 rounded-full">
-                MiMo v2.5 Pro
+                Multi-LLM
               </span>
             </div>
             <div className="flex items-center gap-4 text-sm">
