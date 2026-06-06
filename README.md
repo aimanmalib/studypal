@@ -7,8 +7,10 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
 [![CI](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml/badge.svg)](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml)
-[![Tests: 19](https://img.shields.io/badge/tests-19-brightgreen.svg)](tests/)
+[![Tests: 23](https://img.shields.io/badge/tests-23-brightgreen.svg)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+**🔴 [Live demo →](https://studypal-pearl.vercel.app)**
 
 Works with **OpenAI, OpenRouter, Ollama, llama.cpp, Xiaomi MiMo**, or any endpoint that speaks the OpenAI `/chat/completions` protocol. Pick a provider with one env var — no code changes.
 
