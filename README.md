@@ -66,6 +66,10 @@ StudyPal talks to any OpenAI-compatible `/chat/completions` endpoint. Built-in p
 | OpenAI | `openai` | `gpt-4o-mini` | Bearer | `OPENAI_API_KEY` |
 | OpenRouter | `openrouter` | `openai/gpt-4o-mini` | Bearer | `OPENROUTER_API_KEY` |
 | Ollama (local) | `ollama` | `llama3.1` | Bearer | `OLLAMA_BASE_URL` |
+| Groq | `groq` | `llama-3.3-70b-versatile` | Bearer | `GROQ_API_KEY` |
+| DeepSeek | `deepseek` | `deepseek-chat` | Bearer | `DEEPSEEK_API_KEY` |
+| Together | `together` | `meta-llama/Llama-3.3-70B-Instruct-Turbo` | Bearer | `TOGETHER_API_KEY` |
+| Mistral | `mistral` | `mistral-small-latest` | Bearer | `MISTRAL_API_KEY` |
 | Xiaomi MiMo | `mimo` | `mimo-v2.5-pro` | api-key | `MIMO_API_KEY` |
 
 Set `LLM_PROVIDER` + the matching key (or just `LLM_API_KEY`). Override `LLM_BASE_URL` / `LLM_MODEL` for any other compatible endpoint (llama.cpp, vLLM, LM Studio). The right auth header (bearer vs api-key) is chosen automatically. The chat feature surfaces a model's `reasoning_content` when available, but it isn't required.

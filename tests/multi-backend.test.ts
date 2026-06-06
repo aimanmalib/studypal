@@ -17,7 +17,7 @@ const KEY_PROVIDER = ['k', 'provider'].join('-');
 
 describe('Provider presets', () => {
   it('includes the known providers', () => {
-    for (const p of ['mimo', 'openai', 'openrouter', 'ollama']) {
+    for (const p of ['mimo', 'openai', 'openrouter', 'ollama', 'groq', 'deepseek', 'together', 'mistral']) {
       expect(PROVIDER_PRESETS[p]).toBeDefined();
     }
   });
@@ -60,6 +60,36 @@ describe('resolveConfig', () => {
     const cfg = resolveConfig();
     expect(cfg.baseUrl).toContain('localhost:11434');
     expect(cfg.model).toBe('llama3.1');
+  });
+
+  it('resolves the groq preset', () => {
+    process.env.LLM_PROVIDER = 'groq';
+    const cfg = resolveConfig();
+    expect(cfg.baseUrl).toContain('api.groq.com');
+    expect(cfg.authStyle).toBe('bearer');
+    expect(cfg.model).toBe('llama-3.3-70b-versatile');
+  });
+
+  it('resolves the deepseek preset', () => {
+    process.env.LLM_PROVIDER = 'deepseek';
+    const cfg = resolveConfig();
+    expect(cfg.baseUrl).toContain('api.deepseek.com');
+    expect(cfg.authStyle).toBe('bearer');
+    expect(cfg.model).toBe('deepseek-chat');
+  });
+
+  it('resolves the together preset', () => {
+    process.env.LLM_PROVIDER = 'together';
+    const cfg = resolveConfig();
+    expect(cfg.baseUrl).toContain('api.together.xyz');
+    expect(cfg.authStyle).toBe('bearer');
+  });
+
+  it('resolves the mistral preset', () => {
+    process.env.LLM_PROVIDER = 'mistral';
+    const cfg = resolveConfig();
+    expect(cfg.baseUrl).toContain('api.mistral.ai');
+    expect(cfg.authStyle).toBe('bearer');
   });
 
   it('falls back to the default provider when unknown', () => {
