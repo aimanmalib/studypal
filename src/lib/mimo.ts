@@ -80,6 +80,34 @@ export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
     envKey: 'OLLAMA_API_KEY',
     envBase: 'OLLAMA_BASE_URL',
   },
+  groq: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    authStyle: 'bearer',
+    model: 'llama-3.3-70b-versatile',
+    envKey: 'GROQ_API_KEY',
+    envBase: 'GROQ_BASE_URL',
+  },
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com/v1',
+    authStyle: 'bearer',
+    model: 'deepseek-chat',
+    envKey: 'DEEPSEEK_API_KEY',
+    envBase: 'DEEPSEEK_BASE_URL',
+  },
+  together: {
+    baseUrl: 'https://api.together.xyz/v1',
+    authStyle: 'bearer',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    envKey: 'TOGETHER_API_KEY',
+    envBase: 'TOGETHER_BASE_URL',
+  },
+  mistral: {
+    baseUrl: 'https://api.mistral.ai/v1',
+    authStyle: 'bearer',
+    model: 'mistral-small-latest',
+    envKey: 'MISTRAL_API_KEY',
+    envBase: 'MISTRAL_BASE_URL',
+  },
 };
 
 export const DEFAULT_PROVIDER = 'mimo';
