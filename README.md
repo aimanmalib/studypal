@@ -11,6 +11,19 @@
 
 **[Live demo →](https://studypal-pearl.vercel.app)** (bring your own key: open **Settings**, pick a provider and paste your API key)
 
+<table>
+  <tr>
+    <td width="60%"><img src="docs/screenshots/quiz-en-dark.png" alt="A quiz question with its explanation, dark theme"></td>
+    <td width="40%"><img src="docs/screenshots/flashcard-en-iphone.png" alt="A flashcard answer on iPhone, light theme"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/summary-bm-light.png" alt="A study summary written in Bahasa Melayu, light theme"></td>
+    <td><img src="docs/screenshots/settings-bm-iphone-dark.png" alt="The bring-your-own-key settings panel in Bahasa Melayu on iPhone"></td>
+  </tr>
+</table>
+<sub>Screenshots taken in Safari/WebKit (desktop and iPhone 13). The quiz, flashcard and summary text is real model output.</sub>
+
+
 StudyPal talks to any endpoint that speaks the OpenAI `/chat/completions` protocol. It ships presets for OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Mistral, Xiaomi MiMo, Ollama and llama.cpp.
 
 ---
