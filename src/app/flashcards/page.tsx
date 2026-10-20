@@ -59,7 +59,7 @@ export default function FlashcardsPage() {
           value={count}
           onChange={(e) => setCount(+e.target.value)}
           aria-label="Number of cards"
-          className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-base sm:text-sm"
+          className="select-field rounded-lg border border-slate-700 bg-slate-800 py-2 pr-9 pl-3 text-base sm:text-sm"
         >
           {[5, 8, 10, 15].map((n) => (
             <option key={n} value={n}>

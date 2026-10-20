@@ -149,7 +149,7 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                   ref={firstFieldRef}
                   value={draft.provider}
                   onChange={(e) => changeProvider(e.target.value as ProviderId)}
-                  className={inputClass}
+                  className={`${inputClass} select-field pr-9`}
                 >
                   {PROVIDER_IDS.map((id) => {
                     const p = PROVIDER_PRESETS[id];
