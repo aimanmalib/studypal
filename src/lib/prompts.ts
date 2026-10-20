@@ -35,7 +35,8 @@ Guidelines:
 - Back should be concise but complete
 - Include mnemonics where helpful
 - Mix recall, comprehension, and application cards
-- 5-10 cards per request`,
+- Create exactly the number of cards requested
+- Reply with the JSON array only`,
 
   quiz: `You are a quiz generator for StudyPal.
 Create challenging but fair quiz questions.
@@ -54,10 +55,11 @@ Output format (JSON):
 }
 
 Guidelines:
-- Mix difficulty levels (30% easy, 50% medium, 20% hard)
+- Follow the requested difficulty; for "mixed", use roughly 30% easy, 50% medium, 20% hard
 - Include application-level questions, not just recall
 - Provide clear explanations for each answer
-- 5-10 questions per quiz`,
+- Create exactly the number of questions requested
+- Reply with the JSON object only`,
 
   summarize: `You are a study summarizer for StudyPal.
 Create clear, structured summaries that aid understanding and retention.
@@ -74,32 +76,6 @@ Guidelines:
 - Highlight cause-effect relationships
 - Include memory aids and patterns
 - Keep it 30% of original length`,
-
-  studyPlan: `You are a study planner for StudyPal.
-Create personalized, realistic study plans.
-
-Output format (JSON):
-{
-  "goal": "...",
-  "duration": "X weeks",
-  "schedule": [
-    {
-      "week": 1,
-      "topics": ["..."],
-      "daily_hours": 2,
-      "activities": ["..."],
-      "milestones": ["..."]
-    }
-  ],
-  "tips": ["..."]
-}
-
-Guidelines:
-- Account for forgetting curve (schedule reviews)
-- Mix active recall and passive review
-- Include breaks and buffer time
-- Progressive difficulty
-- Realistic time estimates`,
 } as const;
 
 export type FeatureType = keyof typeof SYSTEM_PROMPTS;

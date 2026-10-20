@@ -1,6 +1,9 @@
 "use client";
 
 import { create } from 'zustand';
+import type { PublicServerInfo } from './llm-config';
+import type { TokenUsage } from './llm';
+import { LLMSettings, clearSettings, loadSettings, saveSettings } from './client/settings';
 
 export interface Message {
   id: string;
@@ -8,6 +11,8 @@ export interface Message {
   content: string;
   timestamp: number;
   tokens?: number;
+  /** Set when the request failed; the bubble shows this instead of content. */
+  error?: { message: string; needsSettings: boolean };
 }
 
 export interface Flashcard {
@@ -18,6 +23,17 @@ export interface Flashcard {
   tags: string[];
   mastered: boolean;
 }
+
+export interface UsageStats {
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  cachedTokens: number;
+  /** Requests whose usage the provider reported. */
+  calls: number;
+}
+
+const EMPTY_USAGE: UsageStats = { totalTokens: 0, promptTokens: 0, completionTokens: 0, cachedTokens: 0, calls: 0 };
 
 export interface QuizQuestion {
   question: string;
@@ -32,7 +48,7 @@ interface AppState {
   messages: Message[];
   isStreaming: boolean;
   addMessage: (msg: Message) => void;
-  updateLastMessage: (content: string) => void;
+  updateLastMessage: (content: string, error?: { message: string; needsSettings: boolean }) => void;
   setStreaming: (v: boolean) => void;
   clearMessages: () => void;
 
@@ -59,6 +75,24 @@ interface AppState {
   // Topic
   currentTopic: string;
   setTopic: (topic: string) => void;
+
+  // Provider settings (bring-your-own-key) and server mode
+  settings: LLMSettings | null;
+  settingsLoaded: boolean;
+  /** False when the browser refused localStorage; settings then last for this tab only. */
+  settingsPersisted: boolean;
+  settingsOpen: boolean;
+  serverInfo: PublicServerInfo | null;
+  loadStoredSettings: () => void;
+  setServerInfo: (info: PublicServerInfo | null) => void;
+  updateSettings: (settings: LLMSettings) => void;
+  forgetKey: () => void;
+  setSettingsOpen: (open: boolean) => void;
+
+  // Token usage for this browser session
+  usage: UsageStats;
+  trackUsage: (usage: TokenUsage) => void;
+  resetUsage: () => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -66,10 +100,10 @@ export const useStore = create<AppState>((set, get) => ({
   messages: [],
   isStreaming: false,
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
-  updateLastMessage: (content) =>
+  updateLastMessage: (content, error) =>
     set((s) => ({
       messages: s.messages.map((m, i) =>
-        i === s.messages.length - 1 ? { ...m, content } : m
+        i === s.messages.length - 1 ? { ...m, content, error } : m
       ),
     })),
   setStreaming: (v) => set({ isStreaming: v }),
@@ -130,4 +164,37 @@ export const useStore = create<AppState>((set, get) => ({
   // Topic
   currentTopic: '',
   setTopic: (topic) => set({ currentTopic: topic }),
+
+  // Provider settings
+  settings: null,
+  settingsLoaded: false,
+  settingsPersisted: true,
+  settingsOpen: false,
+  serverInfo: null,
+  loadStoredSettings: () => set({ settings: loadSettings(), settingsLoaded: true }),
+  setServerInfo: (info) => set({ serverInfo: info }),
+  updateSettings: (settings) => set({ settings, settingsPersisted: saveSettings(settings) }),
+  forgetKey: () => {
+    const current = get().settings;
+    clearSettings();
+    if (!current) return;
+    const settings = { ...current, apiKey: '' };
+    // Keep the provider/model choice, but never the key.
+    set({ settings, settingsPersisted: saveSettings(settings) });
+  },
+  setSettingsOpen: (open) => set({ settingsOpen: open }),
+
+  // Token usage
+  usage: EMPTY_USAGE,
+  trackUsage: (u) =>
+    set((s) => ({
+      usage: {
+        totalTokens: s.usage.totalTokens + u.total_tokens,
+        promptTokens: s.usage.promptTokens + u.prompt_tokens,
+        completionTokens: s.usage.completionTokens + u.completion_tokens,
+        cachedTokens: s.usage.cachedTokens + (u.cached_tokens ?? 0),
+        calls: s.usage.calls + 1,
+      },
+    })),
+  resetUsage: () => set({ usage: EMPTY_USAGE }),
 }));

@@ -1,53 +1,139 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Brand accent (orange). */
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
 
 :root {
-  --mimo-primary: #f97316;
-  --mimo-bg: #0f172a;
-  --mimo-surface: #1e293b;
-  --mimo-text: #f8fafc;
-  --mimo-muted: #94a3b8;
+  --app-bg: #020617;
+  --app-surface: #1e293b;
+  --app-text: #f8fafc;
+  color-scheme: dark;
 }
 
-body {
-  background: var(--mimo-bg);
-  color: var(--mimo-text);
-  font-family: 'Inter', system-ui, sans-serif;
-}
-
-@layer components {
-  .card-hover {
-    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+@layer base {
+  /* Tailwind v4 defaults borders to currentcolor; keep the v3 look. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-slate-700, currentcolor);
   }
-  .gradient-border {
-    @apply border border-transparent bg-clip-padding;
-    background-image: linear-gradient(var(--mimo-surface), var(--mimo-surface)),
-                      linear-gradient(135deg, #f97316, #fb923c, #fdba74);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--app-bg);
+    color: var(--app-text);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-/* Streaming text animation */
+@utility gradient-border {
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(var(--app-surface), var(--app-surface)),
+    linear-gradient(135deg, #f97316, #fb923c, #fdba74);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Streaming cursor */
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .streaming-cursor::after {
   content: '\2588';
   animation: blink 1s infinite;
-  color: var(--mimo-primary);
+  color: var(--color-brand-500);
 }
 
-/* Markdown content styling */
-.prose-mimo h1 { @apply text-2xl font-bold mb-4 text-mimo-400; }
-.prose-mimo h2 { @apply text-xl font-semibold mb-3 text-mimo-300; }
-.prose-mimo h3 { @apply text-lg font-medium mb-2 text-mimo-200; }
-.prose-mimo p { @apply mb-3 leading-relaxed; }
-.prose-mimo ul { @apply list-disc pl-6 mb-3 space-y-1; }
-.prose-mimo ol { @apply list-decimal pl-6 mb-3 space-y-1; }
-.prose-mimo code { @apply bg-slate-800 px-1.5 py-0.5 rounded text-sm text-mimo-400 font-mono; }
-.prose-mimo pre { @apply bg-slate-800 p-4 rounded-lg mb-3 overflow-x-auto; }
-.prose-mimo blockquote { @apply border-l-4 border-mimo-500 pl-4 italic text-slate-300; }
+@media (prefers-reduced-motion: reduce) {
+  .streaming-cursor::after {
+    animation: none;
+  }
+}
+
+/* Markdown answers */
+.prose-study {
+  overflow-wrap: anywhere;
+}
+.prose-study > :last-child {
+  margin-bottom: 0;
+}
+.prose-study h1 {
+  @apply mb-3 text-xl font-bold text-brand-400;
+}
+.prose-study h2 {
+  @apply mb-2 text-lg font-semibold text-brand-300;
+}
+.prose-study h3 {
+  @apply mb-2 text-base font-medium text-brand-200;
+}
+.prose-study p {
+  @apply mb-3 leading-relaxed;
+}
+.prose-study ul {
+  @apply mb-3 list-disc space-y-1 pl-5;
+}
+.prose-study ol {
+  @apply mb-3 list-decimal space-y-1 pl-5;
+}
+.prose-study a {
+  @apply text-brand-400 underline underline-offset-2;
+}
+.prose-study code {
+  @apply rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[0.85em] text-brand-300;
+}
+.prose-study pre {
+  @apply mb-3 overflow-x-auto rounded-lg bg-slate-900 p-3;
+}
+.prose-study pre code {
+  @apply bg-transparent p-0 text-slate-200;
+}
+.prose-study blockquote {
+  @apply border-l-4 border-brand-500 pl-4 text-slate-300 italic;
+}
+.prose-study table {
+  @apply mb-3 block overflow-x-auto;
+}
+
+/* Native selects render grey in WebKit; draw our own chevron instead. */
+@utility select-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
