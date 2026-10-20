@@ -1,42 +1,45 @@
-import { chatCompletion, trackUsage } from '@/lib/mimo';
+import { clampInt, errorResponse, parseDifficulty, parseFlashcards, readJsonBody, requireText } from '@/lib/api';
+import { chatCompletion } from '@/lib/llm';
+import { capMaxTokens, resolveRequestConfig } from '@/lib/llm-config';
+import { LLMError } from '@/lib/llm-errors';
 import { SYSTEM_PROMPTS } from '@/lib/prompts';
 
+export const dynamic = 'force-dynamic';
+
+/** Body: { topic, count? (1-20, default 8), difficulty? } */
 export async function POST(req: Request) {
   try {
-    const { topic, count = 8, difficulty = 'mixed' } = await req.json();
+    const body = await readJsonBody(req);
+    const topic = requireText(body.topic, 'topic', 200);
+    const count = clampInt(body.count, 8, 1, 20);
+    const difficulty = parseDifficulty(body.difficulty);
+    const cfg = resolveRequestConfig(req.headers);
 
-    const response = await chatCompletion([
-      { role: 'system', content: SYSTEM_PROMPTS.flashcards },
-      {
-        role: 'user',
-        content: `Generate ${count} flashcards about: ${topic}\nDifficulty: ${difficulty}`,
-      },
-    ], { temperature: 0.6, max_tokens: 2048 });
+    const response = await chatCompletion(
+      cfg,
+      [
+        { role: 'system', content: SYSTEM_PROMPTS.flashcards },
+        { role: 'user', content: `Generate ${count} flashcards about: ${topic}\nDifficulty: ${difficulty}` },
+      ],
+      { temperature: 0.6, maxTokens: capMaxTokens(2048) },
+    );
 
-    trackUsage(response.usage);
-
-    // Parse flashcards from response
-    let flashcards;
-    try {
-      // Try to extract JSON from response
-      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
-      flashcards = JSON.parse(jsonMatch ? jsonMatch[0] : response.content);
-    } catch {
-      flashcards = [{ front: 'Parse error', back: response.content, difficulty: 'medium', tags: [] }];
+    const cards = parseFlashcards(response.content);
+    if (cards.length === 0) {
+      throw new LLMError(
+        'unparseable_output',
+        'The model did not return flashcards in the expected format. Try again or pick a stronger model.',
+        502,
+      );
     }
 
-    // Add IDs
-    flashcards = flashcards.map((card: Record<string, unknown>, i: number) => ({
-      id: `card-${Date.now()}-${i}`,
-      ...card,
-      mastered: false,
-    }));
-
+    const stamp = Date.now();
     return Response.json({
-      flashcards,
+      flashcards: cards.slice(0, count).map((card, i) => ({ id: `card-${stamp}-${i}`, ...card, mastered: false })),
       usage: response.usage,
+      model: response.model,
     });
-  } catch (error) {
-    return Response.json({ error: 'Failed to generate flashcards' }, { status: 500 });
+  } catch (err) {
+    return errorResponse(err);
   }
 }

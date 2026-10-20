@@ -1,30 +1,45 @@
-import { chatCompletion, trackUsage } from '@/lib/mimo';
+import { clampInt, errorResponse, parseDifficulty, parseQuiz, readJsonBody, requireText } from '@/lib/api';
+import { chatCompletion } from '@/lib/llm';
+import { capMaxTokens, resolveRequestConfig } from '@/lib/llm-config';
+import { LLMError } from '@/lib/llm-errors';
 import { SYSTEM_PROMPTS } from '@/lib/prompts';
 
+export const dynamic = 'force-dynamic';
+
+/** Body: { topic, count? (1-10, default 5), difficulty? } */
 export async function POST(req: Request) {
   try {
-    const { topic, count = 5, difficulty = 'mixed' } = await req.json();
+    const body = await readJsonBody(req);
+    const topic = requireText(body.topic, 'topic', 200);
+    const count = clampInt(body.count, 5, 1, 10);
+    const difficulty = parseDifficulty(body.difficulty);
+    const cfg = resolveRequestConfig(req.headers);
 
-    const response = await chatCompletion([
-      { role: 'system', content: SYSTEM_PROMPTS.quiz },
-      {
-        role: 'user',
-        content: `Generate a quiz about: ${topic}\nQuestions: ${count}\nDifficulty: ${difficulty}`,
-      },
-    ], { temperature: 0.5, max_tokens: 2048 });
+    const response = await chatCompletion(
+      cfg,
+      [
+        { role: 'system', content: SYSTEM_PROMPTS.quiz },
+        { role: 'user', content: `Generate a quiz about: ${topic}\nQuestions: ${count}\nDifficulty: ${difficulty}` },
+      ],
+      { temperature: 0.5, maxTokens: capMaxTokens(2048) },
+    );
 
-    trackUsage(response.usage);
-
-    let quiz;
-    try {
-      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-      quiz = JSON.parse(jsonMatch ? jsonMatch[0] : response.content);
-    } catch {
-      quiz = { title: topic, questions: [] };
+    const quiz = parseQuiz(response.content, topic);
+    if (quiz.questions.length === 0) {
+      throw new LLMError(
+        'unparseable_output',
+        'The model did not return a quiz in the expected format. Try again or pick a stronger model.',
+        502,
+      );
     }
 
-    return Response.json({ ...quiz, usage: response.usage });
-  } catch (error) {
-    return Response.json({ error: 'Failed to generate quiz' }, { status: 500 });
+    return Response.json({
+      title: quiz.title,
+      questions: quiz.questions.slice(0, count),
+      usage: response.usage,
+      model: response.model,
+    });
+  } catch (err) {
+    return errorResponse(err);
   }
 }
