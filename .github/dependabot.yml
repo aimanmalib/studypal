@@ -10,6 +10,11 @@ updates:
         update-types:
           - minor
           - patch
+    # Major upgrades are done on purpose in their own PR, not by the bot.
+    # Dependabot alerts still report vulnerable versions.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
