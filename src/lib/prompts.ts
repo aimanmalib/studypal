@@ -1,3 +1,5 @@
+import type { Language } from './language';
+
 /**
  * System prompts for each StudyPal feature.
  * Designed to work well with any capable instruction-following LLM.
@@ -79,3 +81,39 @@ Guidelines:
 } as const;
 
 export type FeatureType = keyof typeof SYSTEM_PROMPTS;
+
+/**
+ * The language rule appended to every system prompt. Bahasa Melayu here means
+ * Malaysian standard Malay; models often drift into Indonesian, so the common
+ * Indonesian words are named explicitly.
+ */
+export function languageInstruction(language: Language): string {
+  if (language === 'ms') {
+    return `Language: write every part of your answer in standard Malaysian Bahasa Melayu (Bahasa Malaysia, as used in Malaysian schools and by Dewan Bahasa dan Pustaka). Do not write Indonesian. Use Malaysian words, for example "hantar" (not "kirim"), "muat turun" (not "unduh"), "ketika" or "semasa" (not "saat"), "kerana" (not "karena"), "mesti" or "perlu" (not "harus"), "boleh" (not "bisa"), "cuba" (not "coba"), "sila" (not "silakan"), "berjaya" (not "berhasil"). Keep names, formulas and widely used technical terms as they are. Answer in Bahasa Melayu even when the student writes in English, unless they explicitly ask for another language.`;
+  }
+  return 'Language: write every part of your answer in clear English. Answer in English even when the student writes in another language, unless they explicitly ask for another language.';
+}
+
+/** Extra rule for the JSON features: the structure stays machine-readable. */
+const JSON_LANGUAGE_NOTE =
+  'Keep the JSON keys, the difficulty values (easy, medium, hard) and the option letters (A, B, C, D) exactly as specified; only the text values follow the language rule.';
+
+/**
+ * The UI renders Markdown but not LaTeX, and backslashes also break the JSON
+ * answers, so formulas must be plain text.
+ */
+export const FORMULA_NOTE =
+  'Formatting: do not use LaTeX or $...$ math. Write formulas and equations in plain text with Unicode symbols, for example 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ or F = m × a.';
+
+/** System prompt for a feature, with the formatting and answer-language rules added. */
+export function systemPrompt(feature: FeatureType, language: Language): string {
+  const json = feature === 'flashcards' || feature === 'quiz';
+  return `${SYSTEM_PROMPTS[feature]}\n\n${FORMULA_NOTE}\n${languageInstruction(language)}${json ? `\n${JSON_LANGUAGE_NOTE}` : ''}`;
+}
+
+/** Short reminder for the user turn; some models weigh it more than the system prompt. */
+export function languageReminder(language: Language): string {
+  return language === 'ms'
+    ? 'Write the text in Malaysian Bahasa Melayu (not Indonesian).'
+    : 'Write the text in English.';
+}

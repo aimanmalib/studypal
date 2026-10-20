@@ -2,24 +2,26 @@ import { clampInt, errorResponse, parseDifficulty, parseFlashcards, readJsonBody
 import { chatCompletion } from '@/lib/llm';
 import { capMaxTokens, resolveRequestConfig } from '@/lib/llm-config';
 import { LLMError } from '@/lib/llm-errors';
-import { SYSTEM_PROMPTS } from '@/lib/prompts';
+import { parseLanguage } from '@/lib/language';
+import { languageReminder, systemPrompt } from '@/lib/prompts';
 
 export const dynamic = 'force-dynamic';
 
-/** Body: { topic, count? (1-20, default 8), difficulty? } */
+/** Body: { topic, count? (1-20, default 8), difficulty?, language? ('en' | 'ms') } */
 export async function POST(req: Request) {
   try {
     const body = await readJsonBody(req);
     const topic = requireText(body.topic, 'topic', 200);
     const count = clampInt(body.count, 8, 1, 20);
     const difficulty = parseDifficulty(body.difficulty);
+    const language = parseLanguage(body.language);
     const cfg = resolveRequestConfig(req.headers);
 
     const response = await chatCompletion(
       cfg,
       [
-        { role: 'system', content: SYSTEM_PROMPTS.flashcards },
-        { role: 'user', content: `Generate ${count} flashcards about: ${topic}\nDifficulty: ${difficulty}` },
+        { role: 'system', content: systemPrompt('flashcards', language) },
+        { role: 'user', content: `Generate ${count} flashcards about: ${topic}\nDifficulty: ${difficulty}\n${languageReminder(language)}` },
       ],
       { temperature: 0.6, maxTokens: capMaxTokens() },
     );

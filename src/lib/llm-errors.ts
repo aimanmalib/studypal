@@ -4,28 +4,32 @@
  * JSON body or as an SSE `data:` event.
  */
 
-export type LLMErrorCode =
+/** Every error code, in one list so the UI can be checked for a message per code. */
+export const LLM_ERROR_CODES = [
   // Request / configuration problems (HTTP 400).
-  | 'missing_key'
-  | 'invalid_key_format'
-  | 'unknown_provider'
-  | 'provider_not_allowed'
-  | 'base_url_not_allowed'
-  | 'invalid_base_url'
-  | 'invalid_model'
-  | 'bad_request'
+  'missing_key',
+  'invalid_key_format',
+  'unknown_provider',
+  'provider_not_allowed',
+  'base_url_not_allowed',
+  'invalid_base_url',
+  'invalid_model',
+  'bad_request',
   // Server configuration problem (HTTP 500).
-  | 'server_misconfigured'
+  'server_misconfigured',
   // Upstream provider problems.
-  | 'invalid_key'
-  | 'forbidden'
-  | 'model_not_found'
-  | 'rate_limited'
-  | 'upstream_bad_request'
-  | 'upstream_unavailable'
-  | 'upstream_unreachable'
-  | 'upstream_timeout'
-  | 'unparseable_output';
+  'invalid_key',
+  'forbidden',
+  'model_not_found',
+  'rate_limited',
+  'upstream_bad_request',
+  'upstream_unavailable',
+  'upstream_unreachable',
+  'upstream_timeout',
+  'unparseable_output',
+] as const;
+
+export type LLMErrorCode = (typeof LLM_ERROR_CODES)[number];
 
 /** Codes that mean "the visitor needs to fix something in Settings". */
 export const SETTINGS_ERROR_CODES: readonly LLMErrorCode[] = [

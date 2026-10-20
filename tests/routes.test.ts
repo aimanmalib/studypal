@@ -271,3 +271,61 @@ describe('GET /api/config', () => {
     expect(res.headers.get('Cache-Control')).toBe('no-store');
   });
 });
+
+describe('answer language', () => {
+  const MS_RULE = 'standard Malaysian Bahasa Melayu';
+  const EN_RULE = 'write every part of your answer in clear English';
+
+  /** Run one route with a mocked provider and return the messages it sent upstream. */
+  async function sentMessages(
+    route: (req: Request) => Promise<Response>,
+    body: Record<string, unknown>,
+    upstream: Response,
+  ): Promise<{ role: string; content: string }[]> {
+    const fetchMock = mockFetch(upstream);
+    const res = await route(request(body, byok()));
+    await res.text();
+    return JSON.parse(fetchMock.mock.calls[0][1].body).messages;
+  }
+
+  const flashcardsJson = JSON.stringify([{ front: 'Apakah sel?', back: 'Unit asas hidupan.', difficulty: 'easy', tags: [] }]);
+  const quizJson = JSON.stringify({
+    title: 'Kuiz',
+    questions: [{ question: 'Q?', options: ['A) satu', 'B) dua'], correct: 'A', explanation: 'Sebab.' }],
+  });
+
+  const cases: [string, (req: Request) => Promise<Response>, Record<string, unknown>, () => Response][] = [
+    ['chat (SSE)', chatPOST, chatBody, () => streamResponse([chunk('ok'), 'data: [DONE]'])],
+    ['flashcards', flashcardsPOST, { topic: 'Biologi sel', count: 1 }, () => jsonCompletion(flashcardsJson)],
+    ['quiz', quizPOST, { topic: 'Sejarah', count: 1 }, () => jsonCompletion(quizJson)],
+    ['summarize (SSE)', summarizePOST, { content: 'Air menyejat.' }, () => streamResponse([chunk('ok'), 'data: [DONE]'])],
+  ];
+
+  it.each(cases)('%s: language "ms" puts the Bahasa Melayu rule in the prompt', async (_name, route, body, upstream) => {
+    const messages = await sentMessages(route, { ...body, language: 'ms' }, upstream());
+    expect(messages[0].role).toBe('system');
+    expect(messages[0].content).toContain(MS_RULE);
+    expect(messages[0].content).toContain('Do not write Indonesian');
+    expect(messages[0].content).not.toContain(EN_RULE);
+  });
+
+  it.each(cases)('%s: English is the default and unknown values fall back to it', async (_name, route, body, upstream) => {
+    for (const language of [undefined, 'en', 'xx']) {
+      const messages = await sentMessages(route, { ...body, language }, upstream());
+      expect(messages[0].content).toContain(EN_RULE);
+      expect(messages[0].content).not.toContain(MS_RULE);
+    }
+  });
+
+  it('repeats the language in the user turn for flashcards, quiz and summaries', async () => {
+    for (const [, route, body, upstream] of cases.slice(1)) {
+      const messages = await sentMessages(route, { ...body, language: 'ms' }, upstream());
+      expect(messages[messages.length - 1].content).toContain('Malaysian Bahasa Melayu (not Indonesian)');
+    }
+  });
+
+  it('does not change the chat history the student sent', async () => {
+    const messages = await sentMessages(chatPOST, { ...chatBody, language: 'ms' }, streamResponse([chunk('ok'), 'data: [DONE]']));
+    expect(messages.slice(1)).toEqual([{ role: 'user', content: 'What is entropy?' }]);
+  });
+});
