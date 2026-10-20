@@ -1,8 +1,6 @@
 import { streamCompletion, trackUsage } from '@/lib/mimo';
 import { SYSTEM_PROMPTS } from '@/lib/prompts';
 
-export const runtime = 'edge';
-
 export async function POST(req: Request) {
   try {
     const { content, topic } = await req.json();

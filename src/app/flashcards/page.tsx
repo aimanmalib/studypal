@@ -42,7 +42,7 @@ export default function FlashcardsPage() {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="Enter a topic..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-mimo-500"
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-hidden focus:border-mimo-500"
         />
         <select value={count} onChange={(e) => setCount(+e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
           {[5, 8, 10, 15].map(n => <option key={n} value={n}>{n} cards</option>)}

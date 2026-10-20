@@ -3,13 +3,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  poweredByHeader: false,
+  // The UI calls the API routes from the same origin, so no CORS headers are
+  // sent. That keeps other websites from using this deployment as a proxy
+  // from their visitors' browsers.
   headers: async () => [
     {
-      source: '/api/:path*',
+      source: '/:path*',
       headers: [
-        { key: 'Access-Control-Allow-Origin', value: '*' },
-        { key: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'X-Frame-Options', value: 'DENY' },
       ],
     },
   ],

@@ -1,31 +1,81 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  --mimo-primary: #f97316;
-  --mimo-bg: #0f172a;
-  --mimo-surface: #1e293b;
-  --mimo-text: #f8fafc;
-  --mimo-muted: #94a3b8;
-}
+@custom-variant dark (&:is(.dark *));
 
-body {
-  background: var(--mimo-bg);
-  color: var(--mimo-text);
-  font-family: 'Inter', system-ui, sans-serif;
-}
+@theme {
+  --color-mimo-50: #fff7ed;
+  --color-mimo-100: #ffedd5;
+  --color-mimo-200: #fed7aa;
+  --color-mimo-300: #fdba74;
+  --color-mimo-400: #fb923c;
+  --color-mimo-500: #f97316;
+  --color-mimo-600: #ea580c;
+  --color-mimo-700: #c2410c;
+  --color-mimo-800: #9a3412;
+  --color-mimo-900: #7c2d12;
 
-@layer components {
-  .card-hover {
-    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: JetBrains Mono, monospace;
+
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .gradient-border {
-    @apply border border-transparent bg-clip-padding;
-    background-image: linear-gradient(var(--mimo-surface), var(--mimo-surface)),
-                      linear-gradient(135deg, #f97316, #fb923c, #fdba74);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility card-hover {
+  @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+}
+
+@utility gradient-border {
+  @apply border border-transparent bg-clip-padding;
+  background-image:
+    linear-gradient(var(--mimo-surface), var(--mimo-surface)),
+    linear-gradient(135deg, #f97316, #fb923c, #fdba74);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+@layer utilities {
+  :root {
+    --mimo-primary: #f97316;
+    --mimo-bg: #0f172a;
+    --mimo-surface: #1e293b;
+    --mimo-text: #f8fafc;
+    --mimo-muted: #94a3b8;
+  }
+
+  body {
+    background: var(--mimo-bg);
+    color: var(--mimo-text);
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
@@ -48,6 +98,6 @@ body {
 .prose-mimo p { @apply mb-3 leading-relaxed; }
 .prose-mimo ul { @apply list-disc pl-6 mb-3 space-y-1; }
 .prose-mimo ol { @apply list-decimal pl-6 mb-3 space-y-1; }
-.prose-mimo code { @apply bg-slate-800 px-1.5 py-0.5 rounded text-sm text-mimo-400 font-mono; }
+.prose-mimo code { @apply bg-slate-800 px-1.5 py-0.5 rounded-sm text-sm text-mimo-400 font-mono; }
 .prose-mimo pre { @apply bg-slate-800 p-4 rounded-lg mb-3 overflow-x-auto; }
 .prose-mimo blockquote { @apply border-l-4 border-mimo-500 pl-4 italic text-slate-300; }

@@ -92,7 +92,7 @@ export default function ChatPage() {
           value={currentTopic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g., Machine Learning, Organic Chemistry..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-mimo-500 transition"
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-hidden focus:border-mimo-500 transition"
         />
       </div>
 
@@ -149,7 +149,7 @@ export default function ChatPage() {
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
           placeholder="Ask a question..."
           rows={1}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-mimo-500 transition"
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm resize-none focus:outline-hidden focus:border-mimo-500 transition"
         />
         <button
           onClick={sendMessage}

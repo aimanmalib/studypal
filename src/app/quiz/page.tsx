@@ -55,7 +55,7 @@ export default function QuizPage() {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="Enter a topic..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-mimo-500"
+          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-hidden focus:border-mimo-500"
         />
         <button onClick={generate} disabled={loading} className="px-4 py-2 bg-mimo-600 hover:bg-mimo-500 rounded-lg text-sm font-medium disabled:opacity-50">
           {loading ? '...' : 'Generate Quiz'}
