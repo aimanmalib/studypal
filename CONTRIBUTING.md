@@ -1,9 +1,9 @@
 # Contributing to StudyPal
 
-Thanks for your interest in improving StudyPal. This project is a
-provider-agnostic AI study assistant (Next.js + TypeScript) that runs on any
-OpenAI-compatible LLM endpoint. Contributions of all sizes are welcome — docs
-fixes, new provider presets, UI improvements, and bug reports all help.
+Thanks for your interest in improving StudyPal, a provider-agnostic AI study
+assistant (Next.js + TypeScript) that runs on any OpenAI-compatible LLM
+endpoint. Docs fixes, provider presets, UI improvements and bug reports are
+all welcome.
 
 ## Getting started
 
@@ -12,65 +12,68 @@ git clone https://github.com/aimanmalib/studypal.git
 cd studypal
 npm install
 
-# Pick a provider
-echo 'LLM_PROVIDER=openai' > .env.local
-echo 'OPENAI_API_KEY=*** >> .env.local
-
-npm run dev      # http://localhost:3000
-npm test         # 19 tests should pass
+cp .env.example .env.local   # optional: add a server key, or leave empty
+npm run dev                  # http://localhost:3000
 ```
+
+With no key in `.env.local`, open **Settings** in the app and paste your own
+key (bring-your-own-key mode).
 
 ## Development workflow
 
-1. Fork the repo and create a feature branch: `git checkout -b feat/my-change`
+1. Fork the repo and create a branch: `git checkout -b feat/my-change`
 2. Make your change with tests.
-3. Run the full local gate before pushing:
+3. Run the same checks as CI before pushing:
    ```bash
-   npx tsc --noEmit     # type check
-   npm test             # jest tests
-   npm run build        # production build
+   npm run typecheck
+   npm run lint
+   npm test
+   npm run build
    ```
 4. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
    (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `ci:`).
-5. Open a pull request against `main`. CI runs type check + tests + build on
-   Node 18/20 — keep it green.
+5. Open a pull request against `main`. CI runs on Node 20 and 22.
 
-## Adding a new LLM provider
+## Adding an LLM provider
 
-StudyPal talks to any OpenAI-compatible `/chat/completions` endpoint, so most
-providers need only a preset entry. In `src/lib/mimo.ts`, add to
-`PROVIDER_PRESETS`:
+Most OpenAI-compatible providers need only a preset in
+`src/lib/providers.ts`:
 
 ```ts
 myprovider: {
-  baseUrl: 'https://api.myprovider.com/v1',
-  authStyle: 'bearer',          // 'bearer' or 'api-key'
-  model: 'default-model-name',
+  label: 'My Provider',
+  baseUrl: 'https://api.myprovider.com/v1', // also becomes an allowlisted URL
+  authStyle: 'bearer',                       // 'bearer' or 'api-key'
+  defaultModel: 'default-model-name',
   envKey: 'MYPROVIDER_API_KEY',
   envBase: 'MYPROVIDER_BASE_URL',
+  requiresKey: true,
+  local: false,                              // true only for localhost servers
+  keyUrl: 'https://myprovider.com/keys',     // optional, shown in Settings
 },
 ```
 
-Then add a test in `tests/multi-backend.test.ts` mirroring the existing
-provider cases.
+Then update the expected preset list in `tests/providers.test.ts` and the
+provider table in `README.md`.
 
-## Good first issues
+Rules for the API layer:
 
-- Add a provider preset (Together, Groq, DeepSeek, Mistral, ...)
-- Add a new study feature (mind maps, spaced-repetition scheduler)
-- Improve a feature's system prompt in `src/lib/prompts.ts`
-- Accessibility / responsive UI improvements
+- Every route resolves its provider with `resolveRequestConfig()` and calls
+  the provider only through `src/lib/llm.ts`.
+- Never log, store or return an API key, and never echo a provider's error
+  body to the client (use `upstreamError()`).
+- The server may only call preset base URLs unless
+  `LLM_ALLOW_CUSTOM_BASE_URL=1`.
 
 ## Code style
 
-- TypeScript with strict mode (see `tsconfig.json`)
-- Next.js App Router conventions
-- Keep components small and focused
+- TypeScript strict mode, Next.js App Router conventions
+- Small, focused components; user-facing text in plain English
 
-## Reporting bugs / requesting features
+## Reporting bugs and requesting features
 
-Use the issue templates (bug report / feature request). Include repro steps,
-your provider/model, and your Node version for bugs.
+Use the issue templates. For bugs include repro steps, your provider/model and
+your browser or Node version. Security problems: see [SECURITY.md](SECURITY.md).
 
 ## License
 
