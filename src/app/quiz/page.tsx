@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from 'react';
+import { ArrowRight, BookOpen, CircleCheck, CircleX, ListChecks, RotateCcw, Sparkles, ThumbsUp, Trophy } from 'lucide-react';
 import { useStore, QuizQuestion } from '@/lib/store';
-import { postJson } from '@/lib/client/request';
 import type { TokenUsage } from '@/lib/llm';
+import { useStudyApi } from '@/hooks/useStudyApi';
 import { useTokenTracker } from '@/hooks/useTokenTracker';
-import { ErrorNotice, KeyNotice, UiError, useErrorHandler } from '@/components/Notices';
+import { EmptyState, ErrorNotice, KeyNotice, LoadingPanel, PageHeader, UiError, useErrorHandler } from '@/components/Notices';
+import { useI18n } from '@/i18n/I18nProvider';
 
+const QUESTION_COUNT = 5;
 const optionLetter = (opt: string) => opt.trim().charAt(0).toUpperCase();
 
 export default function QuizPage() {
   const { quizQuestions, currentQuestionIndex, score, quizComplete, setQuizQuestions, answerQuestion, nextQuestion, resetQuiz } = useStore();
+  const { t } = useI18n();
+  const api = useStudyApi();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<UiError | null>(null);
-  const settings = useStore((s) => s.settings);
   const { track } = useTokenTracker();
   const handleError = useErrorHandler();
 
@@ -26,13 +29,11 @@ export default function QuizPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await postJson<{ questions: QuizQuestion[]; usage?: TokenUsage }>(
-        '/api/quiz',
-        { topic, count: 5 },
-        settings,
-      );
+      const data = await api.postJson<{ questions: QuizQuestion[]; usage?: TokenUsage }>('/api/quiz', {
+        topic,
+        count: QUESTION_COUNT,
+      });
       setSelectedAnswer(null);
-      setShowExplanation(false);
       setQuizQuestions(data.questions);
       if (data.usage?.total_tokens) track(data.usage);
     } catch (err) {
@@ -46,119 +47,156 @@ export default function QuizPage() {
     if (selectedAnswer) return;
     setSelectedAnswer(answer);
     answerQuestion(answer);
-    setShowExplanation(true);
   };
 
   const handleNext = () => {
     setSelectedAnswer(null);
-    setShowExplanation(false);
     nextQuestion();
   };
 
+  const retry = () => {
+    setSelectedAnswer(null);
+    resetQuiz();
+  };
+
   const question = quizQuestions[currentQuestionIndex];
+  const answered = selectedAnswer !== null;
+  const total = quizQuestions.length;
+  const ratio = total ? score / total : 0;
+  const result =
+    ratio >= 0.8
+      ? { Icon: Trophy, text: t('quiz.resultExcellent') }
+      : ratio >= 0.5
+        ? { Icon: ThumbsUp, text: t('quiz.resultGood') }
+        : { Icon: BookOpen, text: t('quiz.resultKeepGoing') };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl">
       <KeyNotice />
-      <h1 className="text-2xl font-bold mb-6">Quiz</h1>
+      <PageHeader title={t('quiz.title')} intro={t('quiz.intro')} />
 
-      <form onSubmit={generate} className="flex gap-2 mb-6">
+      <form onSubmit={generate} className="mb-6 flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="Enter a topic…"
-          aria-label="Topic"
+          placeholder={t('quiz.topicPlaceholder')}
+          aria-label={t('common.topic')}
           maxLength={200}
-          className="min-w-0 flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-base sm:text-sm focus:outline-hidden focus:border-brand-500"
+          className="field min-w-0 flex-1 px-4 text-base sm:text-sm"
         />
-        <button type="submit" disabled={loading || !topic.trim()} className="shrink-0 px-4 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-sm font-medium disabled:opacity-50">
-          {loading ? 'Generating…' : 'Generate quiz'}
+        <button type="submit" disabled={loading || !topic.trim()} className="btn-primary shrink-0 px-5 text-sm">
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          {loading ? t('quiz.generating') : t('quiz.generate')}
         </button>
       </form>
 
       {error && <ErrorNotice error={error} className="mb-6" />}
 
-      {/* Quiz in progress */}
-      {question && !quizComplete && (
+      {loading && <LoadingPanel label={t('quiz.loadingBody', { n: QUESTION_COUNT, topic: topic.trim() })} lines={5} />}
+
+      {question && !quizComplete && !loading && (
         <div>
-          <div className="flex items-center justify-between mb-4 text-sm text-slate-400">
-            <span>Question {currentQuestionIndex + 1} / {quizQuestions.length}</span>
-            <span>Score: {score}</span>
+          <div className="mb-3 flex items-center justify-between text-sm text-muted">
+            <span>{t('quiz.position', { i: currentQuestionIndex + 1, n: total })}</span>
+            <span>{t('quiz.score', { n: score })}</span>
+          </div>
+          <div
+            className="mb-4 h-1.5 overflow-hidden rounded-full bg-line"
+            role="progressbar"
+            aria-label={t('quiz.position', { i: currentQuestionIndex + 1, n: total })}
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-valuenow={currentQuestionIndex + (answered ? 1 : 0)}
+          >
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-300"
+              style={{ width: `${((currentQuestionIndex + (answered ? 1 : 0)) / total) * 100}%` }}
+            />
           </div>
 
-          <div className="bg-slate-800 rounded-2xl p-6 mb-6">
-            <h3 className="text-lg font-medium mb-4">{question.question}</h3>
-            <div className="space-y-2">
+          <div className="card mb-5 p-5 sm:p-6">
+            <h2 className="mb-5 text-lg leading-snug font-semibold">{question.question}</h2>
+            <div className="space-y-2.5">
               {question.options.map((opt, i) => {
                 const letter = optionLetter(opt);
                 const isSelected = selectedAnswer === letter;
                 const isCorrect = letter === question.correct;
-                const showResult = showExplanation;
-
+                const state = !answered ? 'idle' : isCorrect ? 'correct' : isSelected ? 'wrong' : 'other';
                 return (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => handleAnswer(letter)}
-                    className={`w-full text-left px-4 py-3 rounded-xl border transition ${
-                      showResult
-                        ? isCorrect
-                          ? 'bg-green-900/30 border-green-500 text-green-300'
-                          : isSelected
-                          ? 'bg-red-900/30 border-red-500 text-red-300'
-                          : 'bg-slate-800 border-slate-700 text-slate-400'
-                        : 'bg-slate-800 border-slate-700 hover:border-brand-500 hover:bg-slate-700/60'
+                    aria-disabled={answered}
+                    className={`flex min-h-12 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition sm:text-base ${
+                      state === 'correct'
+                        ? 'border-success-line bg-success-soft text-success-fg'
+                        : state === 'wrong'
+                          ? 'border-danger-line bg-danger-soft text-danger-fg'
+                          : state === 'other'
+                            ? 'cursor-default border-line text-muted'
+                            : 'border-line-field bg-surface hover:border-accent-fg hover:bg-surface-2'
                     }`}
                   >
-                    {opt}
+                    <span className="flex-1">{opt}</span>
+                    {state === 'correct' && (
+                      <>
+                        <CircleCheck className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="sr-only">({t('quiz.correctAnswer')})</span>
+                      </>
+                    )}
+                    {state === 'wrong' && (
+                      <>
+                        <CircleX className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="sr-only">({t('quiz.yourAnswer')})</span>
+                      </>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            {showExplanation && (
-              <div className="mt-4 p-4 bg-slate-900 rounded-xl text-sm text-slate-300">
-                <strong className="text-brand-400">Explanation:</strong> {question.explanation}
+            {answered && (
+              <div role="status" className="mt-5 rounded-xl bg-inset p-4 text-sm leading-relaxed">
+                <p className={`mb-1 font-semibold ${selectedAnswer === question.correct ? 'text-success-fg' : 'text-danger-fg'}`}>
+                  {selectedAnswer === question.correct ? t('quiz.correct') : t('quiz.incorrect')}
+                </p>
+                {question.explanation && (
+                  <p className="text-muted">
+                    <strong className="font-semibold text-fg">{t('quiz.explanation')}:</strong> {question.explanation}
+                  </p>
+                )}
               </div>
             )}
           </div>
 
-          {showExplanation && (
-            <button onClick={handleNext} className="w-full py-3 bg-brand-600 hover:bg-brand-500 rounded-xl font-medium">
-              {currentQuestionIndex >= quizQuestions.length - 1 ? 'See Results' : 'Next Question →'}
+          {answered && (
+            <button type="button" onClick={handleNext} className="btn-primary w-full text-base">
+              {currentQuestionIndex >= total - 1 ? t('quiz.seeResults') : t('quiz.next')}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>
       )}
 
-      {/* Results */}
-      {quizComplete && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">
-            {score >= quizQuestions.length * 0.8 ? '🏆' : score >= quizQuestions.length * 0.5 ? '👍' : '📚'}
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Quiz Complete!</h2>
-          <p className="text-4xl font-bold text-brand-400 mb-2">
-            {score} / {quizQuestions.length}
-          </p>
-          <p className="text-slate-400 mb-6">
-            {score >= quizQuestions.length * 0.8
-              ? 'Excellent! You really know this topic!'
-              : score >= quizQuestions.length * 0.5
-              ? 'Good effort! Review the tricky ones.'
-              : 'Keep studying! You will get there.'}
-          </p>
-          <button onClick={resetQuiz} className="px-6 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg">
-            Try Again
+      {quizComplete && !loading && (
+        <div className="card flex flex-col items-center px-6 py-10 text-center">
+          <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-fg">
+            <result.Icon className="h-8 w-8" aria-hidden="true" />
+          </span>
+          <h2 className="mb-2 text-2xl font-bold tracking-tight">{t('quiz.complete')}</h2>
+          <p className="mb-2 text-4xl font-bold text-accent-fg">{t('quiz.resultScore', { score, n: total })}</p>
+          <p className="mb-6 text-muted">{result.text}</p>
+          <button type="button" onClick={retry} className="btn-primary px-6 text-sm">
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            {t('quiz.retry')}
           </button>
         </div>
       )}
 
-      {quizQuestions.length === 0 && !loading && !error && (
-        <div className="text-center py-20 text-slate-400">
-          <div className="text-5xl mb-4" aria-hidden="true">📝</div>
-          <p>Enter a topic above to start a quiz.</p>
-        </div>
+      {total === 0 && !loading && !error && (
+        <EmptyState icon={ListChecks} title={t('quiz.emptyTitle')} body={t('quiz.empty')} />
       )}
     </div>
   );
