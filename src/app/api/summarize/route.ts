@@ -22,7 +22,7 @@ export async function POST(req: Request) {
           content: `Summarize the following for study purposes:\n\nTopic: ${topic || 'General'}\n\nContent:\n${content}`,
         },
       ],
-      { temperature: 0.5, maxTokens: capMaxTokens(2048) },
+      { temperature: 0.5, maxTokens: capMaxTokens() },
     );
     return sseResponse(chunks);
   } catch (err) {

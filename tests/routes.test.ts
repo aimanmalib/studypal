@@ -134,6 +134,16 @@ describe('POST /api/chat', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).max_tokens).toBe(256);
   });
 
+  it('uses LLM_MAX_TOKENS as the per-answer budget, up to the hard ceiling', async () => {
+    process.env.LLM_MAX_TOKENS = '4096';
+    const fetchMock = mockFetch(streamResponse(['data: [DONE]']), streamResponse(['data: [DONE]']));
+    await (await chatPOST(request(chatBody, byok()))).text();
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).max_tokens).toBe(4096);
+    process.env.LLM_MAX_TOKENS = '100000';
+    await (await chatPOST(request(chatBody, byok()))).text();
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).max_tokens).toBe(8192);
+  });
+
   it('validates the body', async () => {
     const fetchMock = mockFetch();
     for (const body of ['not json', {}, { messages: [] }, { messages: [{ role: 'system', content: 'x' }] }]) {

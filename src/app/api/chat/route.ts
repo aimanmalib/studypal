@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     ];
     const chunks = await openCompletionStream(cfg, messages, {
       temperature: 0.7,
-      maxTokens: capMaxTokens(2048),
+      maxTokens: capMaxTokens(),
     });
     return sseResponse(chunks);
   } catch (err) {

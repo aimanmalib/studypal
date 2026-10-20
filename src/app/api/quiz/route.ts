@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         { role: 'system', content: SYSTEM_PROMPTS.quiz },
         { role: 'user', content: `Generate a quiz about: ${topic}\nQuestions: ${count}\nDifficulty: ${difficulty}` },
       ],
-      { temperature: 0.5, maxTokens: capMaxTokens(2048) },
+      { temperature: 0.5, maxTokens: capMaxTokens() },
     );
 
     const quiz = parseQuiz(response.content, topic);

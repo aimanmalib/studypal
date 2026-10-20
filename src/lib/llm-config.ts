@@ -70,8 +70,8 @@ export function maxTokensCap(env: Env = process.env): number {
   return Math.min(parsed, MAX_TOKENS_CEILING);
 }
 
-/** Clamp a route's requested max_tokens to the server cap. */
-export function capMaxTokens(requested: number | undefined, env: Env = process.env): number {
+/** Clamp a requested max_tokens to the server cap; no request = the cap itself. */
+export function capMaxTokens(requested?: number, env: Env = process.env): number {
   const cap = maxTokensCap(env);
   if (requested === undefined || !Number.isFinite(requested) || requested <= 0) return cap;
   return Math.min(Math.floor(requested), cap);

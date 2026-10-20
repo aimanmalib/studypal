@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         { role: 'system', content: SYSTEM_PROMPTS.flashcards },
         { role: 'user', content: `Generate ${count} flashcards about: ${topic}\nDifficulty: ${difficulty}` },
       ],
-      { temperature: 0.6, maxTokens: capMaxTokens(2048) },
+      { temperature: 0.6, maxTokens: capMaxTokens() },
     );
 
     const cards = parseFlashcards(response.content);
