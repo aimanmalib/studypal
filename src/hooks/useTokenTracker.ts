@@ -1,62 +1,28 @@
 "use client";
 
-import { useState, useCallback, useRef } from 'react';
+import { useStore, type UsageStats } from '@/lib/store';
 
-export interface TokenStats {
-  totalTokens: number;
-  promptTokens: number;
-  completionTokens: number;
-  cachedTokens: number;
-  calls: number;
+export interface TokenStats extends UsageStats {
   avgPerCall: number;
+  /** Share of prompt tokens the provider served from its cache (0 when not reported). */
   cacheHitRate: number;
 }
 
+export function computeTokenStats(usage: UsageStats): TokenStats {
+  return {
+    ...usage,
+    avgPerCall: usage.calls > 0 ? Math.round(usage.totalTokens / usage.calls) : 0,
+    cacheHitRate: usage.promptTokens > 0 ? usage.cachedTokens / usage.promptTokens : 0,
+  };
+}
+
+/**
+ * Token usage reported by the provider for this browser session. Shared by
+ * every page through the app store; it resets on a full page reload.
+ */
 export function useTokenTracker() {
-  const [stats, setStats] = useState<TokenStats>({
-    totalTokens: 0,
-    promptTokens: 0,
-    completionTokens: 0,
-    cachedTokens: 0,
-    calls: 0,
-    avgPerCall: 0,
-    cacheHitRate: 0,
-  });
-
-  const sessionStart = useRef(Date.now());
-
-  const track = useCallback((usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-    cached_tokens?: number;
-  }) => {
-    setStats(prev => {
-      const newPrompt = prev.promptTokens + usage.prompt_tokens;
-      const newCompletion = prev.completionTokens + usage.completion_tokens;
-      const newTotal = prev.totalTokens + usage.total_tokens;
-      const newCached = prev.cachedTokens + (usage.cached_tokens || 0);
-      const newCalls = prev.calls + 1;
-
-      return {
-        totalTokens: newTotal,
-        promptTokens: newPrompt,
-        completionTokens: newCompletion,
-        cachedTokens: newCached,
-        calls: newCalls,
-        avgPerCall: Math.round(newTotal / newCalls),
-        cacheHitRate: newPrompt > 0 ? newCached / newPrompt : 0,
-      };
-    });
-  }, []);
-
-  const reset = useCallback(() => {
-    setStats({
-      totalTokens: 0, promptTokens: 0, completionTokens: 0,
-      cachedTokens: 0, calls: 0, avgPerCall: 0, cacheHitRate: 0,
-    });
-    sessionStart.current = Date.now();
-  }, []);
-
-  return { stats, track, reset, sessionStart: sessionStart.current };
+  const usage = useStore((s) => s.usage);
+  const track = useStore((s) => s.trackUsage);
+  const reset = useStore((s) => s.resetUsage);
+  return { stats: computeTokenStats(usage), track, reset };
 }

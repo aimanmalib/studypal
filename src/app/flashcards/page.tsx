@@ -1,111 +1,135 @@
 "use client";
 
 import { useState } from 'react';
-import { useStore } from '@/lib/store';
+import { useStore, Flashcard } from '@/lib/store';
+import { postJson } from '@/lib/client/request';
+import type { TokenUsage } from '@/lib/llm';
+import { useTokenTracker } from '@/hooks/useTokenTracker';
+import { ErrorNotice, KeyNotice, UiError, useErrorHandler } from '@/components/Notices';
 
 export default function FlashcardsPage() {
   const { flashcards, currentCardIndex, isFlipped, setFlashcards, flipCard, nextCard, prevCard, toggleMastered } = useStore();
+  const settings = useStore((s) => s.settings);
+  const { track } = useTokenTracker();
+  const handleError = useErrorHandler();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(8);
+  const [error, setError] = useState<UiError | null>(null);
 
-  const generate = async () => {
-    if (!topic.trim()) return;
+  const generate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topic.trim() || loading) return;
     setLoading(true);
-
+    setError(null);
     try {
-      const res = await fetch('/api/flashcards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, count }),
-      });
-      const data = await res.json();
-     setFlashcards(data.flashcards || []);
-    } catch {
-      alert('Failed to generate flashcards');
+      const data = await postJson<{ flashcards: Flashcard[]; usage?: TokenUsage }>(
+        '/api/flashcards',
+        { topic, count },
+        settings,
+      );
+      setFlashcards(data.flashcards);
+      if (data.usage?.total_tokens) track(data.usage);
+    } catch (err) {
+      setError(handleError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const card = flashcards[currentCardIndex];
-  const mastered = flashcards.filter(c => c.mastered).length;
+  const mastered = flashcards.filter((c) => c.mastered).length;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">📇 Flashcards</h1>
+    <div className="mx-auto max-w-2xl">
+      <KeyNotice />
+      <h1 className="mb-6 text-2xl font-bold">Flashcards</h1>
 
-      {/* Generator */}
-      <div className="flex gap-2 mb-6">
+      <form onSubmit={generate} className="mb-6 flex flex-wrap gap-2">
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="Enter a topic..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-hidden focus:border-mimo-500"
+          placeholder="Enter a topic…"
+          aria-label="Topic"
+          maxLength={200}
+          className="min-w-0 flex-[1_1_12rem] rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-base focus:border-brand-500 focus:outline-none sm:text-sm"
         />
-        <select value={count} onChange={(e) => setCount(+e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-          {[5, 8, 10, 15].map(n => <option key={n} value={n}>{n} cards</option>)}
+        <select
+          value={count}
+          onChange={(e) => setCount(+e.target.value)}
+          aria-label="Number of cards"
+          className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-base sm:text-sm"
+        >
+          {[5, 8, 10, 15].map((n) => (
+            <option key={n} value={n}>
+              {n} cards
+            </option>
+          ))}
         </select>
-        <button onClick={generate} disabled={loading} className="px-4 py-2 bg-mimo-600 hover:bg-mimo-500 rounded-lg text-sm font-medium disabled:opacity-50">
-          {loading ? '...' : 'Generate'}
+        <button
+          type="submit"
+          disabled={loading || !topic.trim()}
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium transition hover:bg-brand-500 disabled:opacity-50"
+        >
+          {loading ? 'Generating…' : 'Generate'}
         </button>
-      </div>
+      </form>
+
+      {error && <ErrorNotice error={error} className="mb-6" />}
 
       {card && (
         <>
-          {/* Progress */}
-          <div className="flex items-center justify-between mb-4 text-sm text-slate-400">
-            <span>Card {currentCardIndex + 1} / {flashcards.length}</span>
-            <span>Mastered: {mastered} / {flashcards.length}</span>
+          <div className="mb-4 flex items-center justify-between text-sm text-slate-400">
+            <span>
+              Card {currentCardIndex + 1} / {flashcards.length}
+            </span>
+            <span>
+              Mastered: {mastered} / {flashcards.length}
+            </span>
           </div>
 
-          {/* Card */}
-          <div
+          <button
+            type="button"
             onClick={flipCard}
-            className="relative h-64 cursor-pointer perspective-1000"
-          >
-            <div className={`absolute inset-0 rounded-2xl p-8 flex items-center justify-center text-center transition-all duration-500 ${
+            aria-label={isFlipped ? 'Show question' : 'Show answer'}
+            className={`flex min-h-64 w-full items-center justify-center rounded-2xl p-6 text-center transition-colors duration-300 sm:p-8 ${
               isFlipped ? 'bg-slate-700' : 'gradient-border bg-slate-800'
-            }`}>
-              <div>
-                <div className="text-xs text-mimo-400 mb-2">
-                  {isFlipped ? 'Answer' : 'Question'}
-                </div>
-                <div className="text-lg">
-                  {isFlipped ? card.back : card.front}
-                </div>
-                {card.difficulty && (
-                  <div className="mt-4 text-xs text-slate-500">
-                    Difficulty: {card.difficulty}
-                  </div>
-                )}
-              </div>
+            }`}
+          >
+            <div>
+              <div className="mb-2 text-xs text-brand-400">{isFlipped ? 'Answer' : 'Question'}</div>
+              <div className="text-lg break-words">{isFlipped ? card.back : card.front}</div>
+              {card.difficulty && <div className="mt-4 text-xs text-slate-400">Difficulty: {card.difficulty}</div>}
             </div>
-          </div>
+          </button>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button onClick={prevCard} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+            <button onClick={prevCard} className="rounded-lg bg-slate-800 px-4 py-2 text-sm hover:bg-slate-700">
               ← Prev
             </button>
-            <button onClick={flipCard} className="px-6 py-2 bg-mimo-600 hover:bg-mimo-500 rounded-lg text-sm font-medium">
+            <button onClick={flipCard} className="rounded-lg bg-brand-600 px-6 py-2 text-sm font-medium hover:bg-brand-500">
               Flip
             </button>
-            <button onClick={() => toggleMastered(card.id)} className={`px-4 py-2 rounded-lg text-sm ${card.mastered ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'}`}>
-              {card.mastered ? '✓ Mastered' : 'Mark Mastered'}
+            <button
+              onClick={() => toggleMastered(card.id)}
+              className={`rounded-lg px-4 py-2 text-sm ${card.mastered ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'}`}
+            >
+              {card.mastered ? '✓ Mastered' : 'Mark mastered'}
             </button>
-            <button onClick={nextCard} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">
+            <button onClick={nextCard} className="rounded-lg bg-slate-800 px-4 py-2 text-sm hover:bg-slate-700">
               Next →
             </button>
           </div>
         </>
       )}
 
-      {flashcards.length === 0 && !loading && (
-        <div className="text-center py-20 text-slate-500">
-          <div className="text-5xl mb-4">📇</div>
-          <p>Enter a topic above to generate flashcards</p>
+      {flashcards.length === 0 && !loading && !error && (
+        <div className="py-20 text-center text-slate-400">
+          <div className="mb-4 text-5xl" aria-hidden="true">
+            📇
+          </div>
+          <p>Enter a topic above to generate flashcards.</p>
         </div>
       )}
     </div>

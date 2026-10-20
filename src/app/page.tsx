@@ -1,114 +1,97 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useStore, Message } from '@/lib/store';
+import { postStream } from '@/lib/client/request';
 import { useTokenTracker } from '@/hooks/useTokenTracker';
+import { ErrorNotice, KeyNotice, useErrorHandler } from '@/components/Notices';
+import { TrashIcon } from '@/components/icons';
+
+const SUGGESTIONS = ['Explain quantum computing simply', 'Make a 4-week study plan for calculus', 'Help me understand photosynthesis'];
 
 export default function ChatPage() {
-  const { messages, addMessage, updateLastMessage, isStreaming, setStreaming, clearMessages, currentTopic, setTopic } = useStore();
+  const { messages, addMessage, updateLastMessage, isStreaming, setStreaming, clearMessages, currentTopic, setTopic } =
+    useStore();
+  const settings = useStore((s) => s.settings);
   const { stats, track } = useTokenTracker();
+  const handleError = useErrorHandler();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim() || isStreaming) return;
 
-    const userMsg: Message = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
-      content: input.trim(),
-      timestamp: Date.now(),
-    };
+    const userMsg: Message = { id: `msg-${Date.now()}`, role: 'user', content: input.trim(), timestamp: Date.now() };
+    // Failed turns are shown but not sent back to the model.
+    const history = [...messages.filter((m) => !m.error && m.content), userMsg];
     addMessage(userMsg);
     setInput('');
-
-    const assistantMsg: Message = {
-      id: `msg-${Date.now()}-ai`,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-    };
-    addMessage(assistantMsg);
+    addMessage({ id: `msg-${Date.now()}-ai`, role: 'assistant', content: '', timestamp: Date.now() });
     setStreaming(true);
 
+    let accumulated = '';
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          topic: currentTopic,
-        }),
-      });
-
-      if (!res.ok || !res.body) throw new Error('Stream failed');
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulated = '';
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.content) {
-              accumulated += parsed.content;
-              updateLastMessage(accumulated);
-            }
-          } catch {}
-        }
+      await postStream(
+        '/api/chat',
+        { messages: history.map((m) => ({ role: m.role, content: m.content })), topic: currentTopic },
+        settings,
+        (event) => {
+          if (event.content) {
+            accumulated += event.content;
+            updateLastMessage(accumulated);
+          }
+          if (event.usage) track(event.usage);
+        },
+      );
+      if (!accumulated) {
+        updateLastMessage('', { message: 'The model sent an empty answer. Please try again.', needsSettings: false });
       }
-    } catch (error) {
-      updateLastMessage('Sorry, I encountered an error. Please try again.');
+    } catch (err) {
+      updateLastMessage(accumulated, handleError(err));
     } finally {
       setStreaming(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      {/* Topic bar */}
-      <div className="flex items-center gap-2 mb-4">
-        <label className="text-sm text-slate-400">Topic:</label>
+    <div className="mx-auto flex h-[calc(100dvh-9.5rem)] min-h-[26rem] max-w-3xl flex-col md:h-[calc(100dvh-7rem)]">
+      <KeyNotice />
+
+      <div className="mb-4 flex items-center gap-2">
+        <label htmlFor="topic" className="shrink-0 text-sm text-slate-400">
+          Topic
+        </label>
         <input
+          id="topic"
           type="text"
           value={currentTopic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g., Machine Learning, Organic Chemistry..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-hidden focus:border-mimo-500 transition"
+          placeholder="e.g. Machine learning, organic chemistry"
+          maxLength={200}
+          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-base transition focus:border-brand-500 focus:outline-none sm:text-sm"
         />
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+      <div className="mb-4 flex-1 space-y-4 overflow-y-auto pr-1" aria-live="polite">
         {messages.length === 0 && (
-          <div className="text-center py-20 text-slate-500">
-            <div className="text-6xl mb-4">🎓</div>
-            <h2 className="text-xl font-semibold mb-2">Welcome to StudyPal</h2>
-            <p className="text-sm">Ask me anything about your studies. I explain concepts, create quizzes, and help you learn.</p>
+          <div className="py-12 text-center text-slate-400 sm:py-20">
+            <div className="mb-4 text-5xl" aria-hidden="true">
+              🎓
+            </div>
+            <h1 className="mb-2 text-xl font-semibold text-slate-100">Welcome to StudyPal</h1>
+            <p className="text-sm">Ask anything about your studies. I explain concepts step by step and check your understanding.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {['Explain quantum computing', 'Create a study plan for calculus', 'Help me understand photosynthesis'].map((q) => (
+              {SUGGESTIONS.map((q) => (
                 <button
                   key={q}
-                  onClick={() => { setInput(q); }}
-                  className="px-3 py-1.5 bg-slate-800 rounded-full text-xs hover:bg-slate-700 transition"
+                  type="button"
+                  onClick={() => setInput(q)}
+                  className="rounded-full bg-slate-800 px-3 py-1.5 text-xs text-slate-300 transition hover:bg-slate-700"
                 >
                   {q}
                 </button>
@@ -117,58 +100,76 @@ export default function ChatPage() {
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-mimo-600 text-white'
-                  : 'bg-slate-800 border border-slate-700'
-              }`}
-            >
-              <div className="prose-mimo text-sm whitespace-pre-wrap">
-                {msg.content || (isStreaming && msg.role === 'assistant' ? (
-                  <span className="streaming-cursor text-slate-400">Thinking</span>
-                ) : null)}
+        {messages.map((msg, i) => {
+          const isLast = i === messages.length - 1;
+          if (msg.role === 'assistant' && msg.error && !msg.content) {
+            return <ErrorNotice key={msg.id} error={msg.error} className="max-w-[90%]" />;
+          }
+          return (
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[90%] rounded-2xl px-4 py-3 sm:max-w-[80%] ${
+                  msg.role === 'user' ? 'bg-brand-600 text-white' : 'border border-slate-700 bg-slate-800'
+                }`}
+              >
+                {msg.role === 'user' ? (
+                  <p className="text-sm break-words whitespace-pre-wrap">{msg.content}</p>
+                ) : msg.content ? (
+                  <div className="prose-study text-sm">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                ) : isStreaming && isLast ? (
+                  <span className="streaming-cursor text-sm text-slate-400">Thinking</span>
+                ) : null}
+                {msg.error && msg.content && <p className="mt-2 text-xs text-red-300">{msg.error.message}</p>}
               </div>
-              {msg.tokens && (
-                <div className="text-xs text-slate-500 mt-1">{msg.tokens} tokens</div>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="flex gap-2">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage();
+        }}
+      >
         <textarea
-          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          placeholder="Ask a question..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
+          placeholder="Ask a question…"
+          aria-label="Your question"
           rows={1}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm resize-none focus:outline-hidden focus:border-mimo-500 transition"
+          className="min-w-0 flex-1 resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-base transition focus:border-brand-500 focus:outline-none sm:text-sm"
         />
         <button
-          onClick={sendMessage}
+          type="submit"
           disabled={isStreaming || !input.trim()}
-          className="px-6 py-3 bg-mimo-600 hover:bg-mimo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium text-sm transition"
+          className="shrink-0 rounded-xl bg-brand-600 px-5 py-3 text-sm font-medium transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isStreaming ? '...' : 'Send'}
+          {isStreaming ? '…' : 'Send'}
         </button>
         <button
+          type="button"
           onClick={clearMessages}
-          className="px-3 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm transition"
+          disabled={isStreaming || messages.length === 0}
+          className="shrink-0 rounded-xl bg-slate-800 px-3 py-3 text-slate-300 transition hover:bg-slate-700 disabled:opacity-40"
+          aria-label="Clear chat"
           title="Clear chat"
         >
-          🗑
+          <TrashIcon />
         </button>
-      </div>
+      </form>
 
-      {/* Token stats */}
-      <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
         <span>Tokens: {stats.totalTokens.toLocaleString()}</span>
         <span>Calls: {stats.calls}</span>
         <span>Avg/call: {stats.avgPerCall.toLocaleString()}</span>
