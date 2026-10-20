@@ -2,7 +2,7 @@
 
 > **Open-source AI study assistant for any OpenAI-compatible LLM**
 >
-> Chat, flashcards, quizzes and study summaries, with streaming answers. Bring your own API key, or self-host with a server key.
+> Chat, flashcards, quizzes and study summaries, with streaming answers, in **English or Bahasa Melayu**. Bring your own API key, or self-host with a server key.
 
 [![CI](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml/badge.svg)](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
@@ -25,13 +25,23 @@ StudyPal talks to any endpoint that speaks the OpenAI `/chat/completions` protoc
 | 📋 **Summarize** | Paste up to 30,000 characters and get a structured study summary | SSE stream |
 | 📊 **Stats** | The provider and model in use, plus the token usage your provider reported in this tab | Client-side |
 
+### English and Bahasa Melayu
+
+- Every screen is available in English and Bahasa Melayu. Switch with the **EN / BM** control in the header. The first visit follows the browser language (`ms`, `ms-MY` … → Bahasa Melayu, anything else → English); a choice is remembered in `localStorage` (plus a cookie, so the server renders the right language without a flash of English).
+- The AI answers in the selected language. Each request carries `"language": "en" | "ms"`, and the server adds a language rule to the system prompt (and repeats it in the user turn for flashcards, quizzes and summaries). For Bahasa Melayu the rule asks for standard Malaysian Malay and names common Indonesian words to avoid (*kirim*, *unduh*, *saat*, *karena*, *harus*…). This is an instruction to the model, so how well it is followed depends on the model you pick.
+- All interface text lives in [`src/i18n/en.json`](src/i18n/en.json) and [`src/i18n/ms.json`](src/i18n/ms.json). A test fails if a key or `{placeholder}` is missing from either file, if a component uses an unknown key, or if interface text is hard-coded in JSX. Error messages from the API are shown in the selected language by error code.
+
+### Light and dark themes
+
+The dark theme is the default look; a light theme is available from the sun / moon button. Without a saved choice the operating system's `prefers-color-scheme` decides (also without JavaScript). Colours are semantic CSS tokens in [`src/app/globals.css`](src/app/globals.css), so both themes change together. Text colours meet WCAG AA (≥ 4.5:1) in both themes, for example body text 19.3:1 (dark) / 17.1:1 (light), secondary text 5.7:1 / 7.2:1, and white on the orange buttons 5.2:1; input borders and the focus ring are ≥ 3:1. Controls have a visible focus ring and touch targets of at least 44 px.
+
 ## Two ways to run it
 
 ### 1. Bring your own key (the live demo)
 
 When the server has **no** LLM key in its environment, every visitor uses their own:
 
-1. Open **Settings** (key button, top right).
+1. Open **Settings** (key button, top right; **Tetapan** in Bahasa Melayu).
 2. Pick a provider. The model field fills in that provider's default; you can change it.
 3. Paste your API key and press **Save**.
 
@@ -108,14 +118,14 @@ A missing key opens Settings with "Add your API key in Settings to use StudyPal.
 
 ## API routes
 
-All routes accept the optional `x-llm-provider`, `x-llm-model`, `x-llm-key` (and, only with `LLM_ALLOW_CUSTOM_BASE_URL=1`, `x-llm-base-url`) headers described above. Errors are `{ "error": "<message>", "code": "<code>" }`, for example `missing_key` (400), `base_url_not_allowed` (400) or `invalid_key` (502). Full details: [docs/api-reference.md](docs/api-reference.md).
+Every POST body also accepts `"language": "en"` (default) or `"ms"`, the language the model must answer in. All routes accept the optional `x-llm-provider`, `x-llm-model`, `x-llm-key` (and, only with `LLM_ALLOW_CUSTOM_BASE_URL=1`, `x-llm-base-url`) headers described above. Errors are `{ "error": "<message>", "code": "<code>" }`, for example `missing_key` (400), `base_url_not_allowed` (400) or `invalid_key` (502). Full details: [docs/api-reference.md](docs/api-reference.md).
 
 | Route | Body | Response |
 |-------|------|----------|
-| `POST /api/chat` | `{ "messages": [{ "role": "user", "content": "..." }], "topic": "optional" }` | SSE |
-| `POST /api/flashcards` | `{ "topic": "Cell biology", "count": 8, "difficulty": "mixed" }` | JSON |
-| `POST /api/quiz` | `{ "topic": "Calculus", "count": 5, "difficulty": "mixed" }` | JSON |
-| `POST /api/summarize` | `{ "content": "text...", "topic": "optional" }` | SSE |
+| `POST /api/chat` | `{ "messages": [{ "role": "user", "content": "..." }], "topic": "optional", "language": "ms" }` | SSE |
+| `POST /api/flashcards` | `{ "topic": "Cell biology", "count": 8, "difficulty": "mixed", "language": "en" }` | JSON |
+| `POST /api/quiz` | `{ "topic": "Calculus", "count": 5, "difficulty": "mixed", "language": "en" }` | JSON |
+| `POST /api/summarize` | `{ "content": "text...", "topic": "optional", "language": "ms" }` | SSE |
 | `GET /api/config` | | Server mode (`byok` or `server`), never a key |
 
 ## Deploy to Vercel
@@ -126,7 +136,7 @@ Import the repository in Vercel, or run `npx vercel --prod`. With no environment
 
 ```bash
 npm run dev         # dev server
-npm test            # Jest: provider layer, API routes, settings UI
+npm test            # Jest: provider layer, API routes, settings UI, translations
 npm run lint        # ESLint (eslint-config-next)
 npm run typecheck   # tsc --noEmit
 npm run build       # production build
@@ -137,7 +147,7 @@ Requires Node.js 20.9 or newer.
 ## Tech stack
 
 - **Next.js 16** (App Router, Node.js route handlers), **React 19**, **TypeScript 5**
-- **Tailwind CSS 4**, **Zustand** for client state, **react-markdown** for answers
+- **Tailwind CSS 4** (semantic colour tokens, light + dark), **lucide-react** icons, **Zustand** for client state, **react-markdown** for answers
 - **Jest 30** + Testing Library
 
 ## Project structure
@@ -155,15 +165,18 @@ src/
 │   ├── flashcards/ quiz/ summarize/ dashboard/
 │   ├── layout.tsx
 │   └── globals.css
-├── components/                    # header, Settings dialog, notices, icons
-├── hooks/useTokenTracker.ts       # session token stats
+├── components/                    # header, Settings dialog, notices, theme toggle
+├── hooks/                         # session token stats, API calls with the language
+├── i18n/                          # en.json + ms.json (all interface text), provider
 └── lib/
     ├── providers.ts               # provider presets = base URL allowlist
     ├── llm-config.ts              # env vs header key resolution, SSRF guard, caps
     ├── llm.ts                     # OpenAI-compatible client (JSON + SSE)
     ├── llm-errors.ts              # friendly error mapping
     ├── api.ts                     # route helpers, validation, output parsing
-    ├── prompts.ts                 # system prompts
+    ├── prompts.ts                 # system prompts + answer-language rule
+    ├── language.ts                # supported languages, browser-language detection
+    ├── theme.ts                   # light / dark theme
     ├── store.ts                   # Zustand store
     └── client/                    # browser: settings storage + API calls
 tests/                             # Jest

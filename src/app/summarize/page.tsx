@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useStore } from '@/lib/store';
+import { FileText } from 'lucide-react';
 import { MAX_SUMMARY_INPUT } from '@/lib/api';
-import { postStream } from '@/lib/client/request';
+import { useStudyApi } from '@/hooks/useStudyApi';
 import { useTokenTracker } from '@/hooks/useTokenTracker';
-import { ErrorNotice, KeyNotice, UiError, useErrorHandler } from '@/components/Notices';
+import { ErrorNotice, KeyNotice, PageHeader, UiError, useErrorHandler } from '@/components/Notices';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function SummarizePage() {
-  const settings = useStore((s) => s.settings);
+  const { t, formatNumber } = useI18n();
+  const api = useStudyApi();
   const { track } = useTokenTracker();
   const handleError = useErrorHandler();
   const [content, setContent] = useState('');
@@ -26,7 +28,7 @@ export default function SummarizePage() {
     setSummary('');
     let text = '';
     try {
-      await postStream('/api/summarize', { content, topic }, settings, (event) => {
+      await api.postStream('/api/summarize', { content, topic }, (event) => {
         if (event.content) {
           text += event.content;
           setSummary(text);
@@ -43,40 +45,44 @@ export default function SummarizePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <KeyNotice />
-      <h1 className="mb-2 text-2xl font-bold">Summarize</h1>
-      <p className="mb-6 text-sm text-slate-400">
-        Paste notes, an article or a textbook section and get a structured study summary.
-      </p>
+      <PageHeader title={t('summarize.title')} intro={t('summarize.intro')} />
 
-      <form onSubmit={summarize} className="space-y-3">
-        <input
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="Topic (optional)"
-          aria-label="Topic"
-          maxLength={200}
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-base focus:border-brand-500 focus:outline-none sm:text-sm"
-        />
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Paste the text to summarize…"
-          aria-label="Text to summarize"
-          maxLength={MAX_SUMMARY_INPUT}
-          rows={8}
-          className="w-full resize-y rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-base focus:border-brand-500 focus:outline-none sm:text-sm"
-        />
+      <form onSubmit={summarize} className="space-y-4">
+        <div>
+          <label htmlFor="sum-topic" className="mb-1.5 block text-sm font-medium">
+            {t('summarize.topicLabel')}
+          </label>
+          <input
+            id="sum-topic"
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder={t('summarize.topicPlaceholder')}
+            maxLength={200}
+            className="field w-full px-4 text-base sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="sum-content" className="mb-1.5 block text-sm font-medium">
+            {t('summarize.contentLabel')}
+          </label>
+          <textarea
+            id="sum-content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={t('summarize.contentPlaceholder')}
+            maxLength={MAX_SUMMARY_INPUT}
+            rows={8}
+            className="field w-full resize-y px-4 py-3 text-base leading-relaxed sm:text-sm"
+          />
+        </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-slate-500">
-            {content.length.toLocaleString()} / {MAX_SUMMARY_INPUT.toLocaleString()} characters
+          <span className="text-xs text-muted tabular-nums">
+            {t('summarize.counter', { n: formatNumber(content.length), max: formatNumber(MAX_SUMMARY_INPUT) })}
           </span>
-          <button
-            type="submit"
-            disabled={loading || !content.trim()}
-            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium transition hover:bg-brand-500 disabled:opacity-50"
-          >
-            {loading ? 'Summarizing…' : 'Summarize'}
+          <button type="submit" disabled={loading || !content.trim()} className="btn-primary px-5 text-sm">
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            {loading ? t('summarize.submitting') : t('summarize.submit')}
           </button>
         </div>
       </form>
@@ -84,13 +90,14 @@ export default function SummarizePage() {
       {error && <ErrorNotice error={error} className="mt-6" />}
 
       {(summary || (loading && !error)) && (
-        <section aria-live="polite" className="mt-6 rounded-2xl border border-slate-700 bg-slate-800 p-5">
+        <section aria-live="polite" aria-busy={loading} className="card mt-6 p-5 sm:p-6">
+          <h2 className="mb-4 text-xs font-semibold tracking-wide text-accent-fg uppercase">{t('summarize.resultTitle')}</h2>
           {summary ? (
             <div className="prose-study text-sm">
               <ReactMarkdown>{summary}</ReactMarkdown>
             </div>
           ) : (
-            <span className="streaming-cursor text-sm text-slate-400">Reading</span>
+            <span className="streaming-cursor text-sm text-muted">{t('summarize.reading')}</span>
           )}
         </section>
       )}

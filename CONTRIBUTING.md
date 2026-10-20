@@ -68,7 +68,9 @@ Rules for the API layer:
 ## Code style
 
 - TypeScript strict mode, Next.js App Router conventions
-- Small, focused components; user-facing text in plain English
+- Small, focused components; user-facing text in plain language
+- Interface text goes in `src/i18n/en.json` **and** `src/i18n/ms.json` (same key in both; standard Malaysian Bahasa Melayu, not Indonesian), never directly in a component. `npm test` checks this
+- Colours come from the semantic tokens in `src/app/globals.css` (`bg-surface`, `text-muted`…), so light and dark themes stay in step
 
 ## Reporting bugs and requesting features
 

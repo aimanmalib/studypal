@@ -4,10 +4,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { PROVIDER_IDS, PROVIDER_PRESETS, ProviderId, isValidModel } from '@/lib/providers';
 import { LLMSettings, defaultSettings, maskKey } from '@/lib/client/settings';
-import { CloseIcon, EyeIcon, EyeOffIcon, ShieldIcon, TrashIcon } from './icons';
+import { Eye, EyeOff, ShieldCheck, Trash2, X } from 'lucide-react';
+import { useI18n } from '@/i18n/I18nProvider';
+import { rich } from '@/i18n/rich';
 
-const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none sm:text-sm';
+const inputClass = 'field w-full px-3 py-2.5 text-base sm:text-sm';
 
 export default function SettingsDialog() {
   const open = useStore((s) => s.settingsOpen);
@@ -22,6 +23,7 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
   const serverInfo = useStore((s) => s.serverInfo);
   const updateSettings = useStore((s) => s.updateSettings);
   const forgetKey = useStore((s) => s.forgetKey);
+  const { t } = useI18n();
 
   const [draft, setDraft] = useState<LLMSettings>(() => saved ?? defaultSettings());
   const [showKey, setShowKey] = useState(false);
@@ -66,15 +68,15 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     const model = draft.model.trim() || preset.defaultModel;
     if (!isValidModel(model)) {
-      setError('That model name has characters a model id cannot contain.');
+      setError(t('settings.errorModel'));
       return;
     }
     if (preset.requiresKey && !draft.apiKey.trim() && !draft.baseUrl.trim()) {
-      setError(`Paste your ${preset.label} API key to continue.`);
+      setError(t('settings.errorKey', { provider: preset.label }));
       return;
     }
     if (preset.local && !allowCustom) {
-      setError(`${preset.label} only works when you self-host StudyPal.`);
+      setError(t('settings.errorLocal', { provider: preset.label }));
       return;
     }
     const next = { ...draft, model, apiKey: draft.apiKey.trim(), baseUrl: allowCustom ? draft.baseUrl.trim() : '' };
@@ -88,62 +90,67 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     forgetKey();
     setDraft((d) => ({ ...d, apiKey: '' }));
     setError(null);
-    setNotice('Key removed from this browser.');
+    setNotice(t('settings.keyRemoved'));
   };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-slate-950/75" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-950/60" onClick={onClose} aria-hidden="true" />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-w-lg sm:rounded-2xl"
+        className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface text-fg shadow-2xl sm:max-w-lg sm:rounded-2xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div>
             <h2 id={titleId} className="text-lg font-semibold">
-              Settings
+              {t('settings.title')}
             </h2>
-            <p className="text-sm text-slate-400">Choose the AI provider StudyPal talks to.</p>
+            <p className="text-sm text-muted">{t('settings.subtitle')}</p>
           </div>
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="-mr-2 rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-            aria-label="Close settings"
+            className="icon-btn -mt-1 -mr-2"
+            aria-label={t('settings.close')}
           >
-            <CloseIcon className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         {serverMode ? (
           <div className="space-y-4 overflow-y-auto px-5 py-5 text-sm">
-            <p className="text-slate-300">
-              This StudyPal is set up by its owner with a server-side key, so you do not need your own.
-            </p>
-            <dl className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-950/60">
-              <Row label="Provider" value={serverInfo?.providerLabel ?? '—'} />
-              <Row label="Model" value={serverInfo?.model ?? '—'} />
-              <Row label="Endpoint" value={serverInfo?.endpointHost ?? '—'} />
+            <p>{t('settings.serverIntro')}</p>
+            <dl className="divide-y divide-line rounded-xl border border-line bg-inset">
+              <Row label={t('settings.provider')} value={serverInfo?.providerLabel ?? '—'} />
+              <Row label={t('settings.model')} value={serverInfo?.model ?? '—'} />
+              <Row
+                label={t('settings.endpoint')}
+                value={
+                  serverInfo?.endpointHost === 'custom endpoint'
+                    ? t('stats.customEndpoint')
+                    : (serverInfo?.endpointHost ?? '—')
+                }
+              />
             </dl>
-            {serverInfo?.error && <p className="text-red-300">{serverInfo.error}</p>}
+            {serverInfo?.error && <p className="text-danger-fg">{t('error.server_misconfigured')}</p>}
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white transition hover:bg-brand-500"
+                className="btn-primary px-5"
               >
-                Done
+                {t('settings.done')}
               </button>
             </div>
           </div>
         ) : (
           <form onSubmit={save} className="flex min-h-0 flex-col">
             <div className="space-y-5 overflow-y-auto px-5 py-5">
-              <Field label="Provider" htmlFor="sp-provider">
+              <Field label={t('settings.provider')} htmlFor="sp-provider">
                 <select
                   id="sp-provider"
                   ref={firstFieldRef}
@@ -157,7 +164,7 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                     return (
                       <option key={id} value={id} disabled={disabled}>
                         {p.label}
-                        {disabled ? ' — self-host only' : ''}
+                        {disabled ? t('settings.selfHostOnly') : ''}
                       </option>
                     );
                   })}
@@ -165,20 +172,21 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               </Field>
 
               <Field
-                label="Model"
+                label={t('settings.model')}
                 htmlFor="sp-model"
                 hint={
                   <>
-                    Default for {preset.label}: <code className="text-slate-300">{preset.defaultModel}</code>
+                    {t('settings.modelDefault', { provider: preset.label })}{' '}
+                    <code className="font-mono text-fg">{preset.defaultModel}</code>
                     {draft.model.trim() !== preset.defaultModel && (
                       <>
                         {' · '}
                         <button
                           type="button"
-                          className="text-brand-400 underline-offset-2 hover:underline"
+                          className="font-medium text-accent-fg underline underline-offset-2"
                           onClick={() => setDraft((d) => ({ ...d, model: preset.defaultModel }))}
                         >
-                          Use default
+                          {t('settings.useDefault')}
                         </button>
                       </>
                     )}
@@ -199,19 +207,19 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               </Field>
 
               <Field
-                label={preset.requiresKey ? 'API key' : 'API key (optional)'}
+                label={preset.requiresKey ? t('settings.apiKey') : t('settings.apiKeyOptional')}
                 htmlFor="sp-key"
                 hint={
                   saved?.apiKey && saved.provider === draft.provider ? (
-                    <>Saved key: {maskKey(saved.apiKey)}</>
+                    <>{t('settings.savedKey', { key: maskKey(saved.apiKey) })}</>
                   ) : 'keyUrl' in preset && preset.keyUrl ? (
                     <>
-                      Get one at{' '}
+                      {t('settings.getKeyAt')}{' '}
                       <a
                         href={preset.keyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-brand-400 underline-offset-2 hover:underline"
+                        className="font-medium text-accent-fg underline underline-offset-2"
                       >
                         {new URL(preset.keyUrl).host}
                       </a>
@@ -228,7 +236,7 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                       setDraft((d) => ({ ...d, apiKey: e.target.value }));
                       setNotice(null);
                     }}
-                    placeholder="Paste your key"
+                    placeholder={t('settings.keyPlaceholder')}
                     autoComplete="off"
                     autoCapitalize="off"
                     autoCorrect="off"
@@ -238,19 +246,19 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => setShowKey((v) => !v)}
-                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-white"
-                    aria-label={showKey ? 'Hide key' : 'Show key'}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted hover:text-fg"
+                    aria-label={showKey ? t('settings.hideKey') : t('settings.showKey')}
                   >
-                    {showKey ? <EyeOffIcon /> : <EyeIcon />}
+                    {showKey ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                   </button>
                 </div>
               </Field>
 
               {allowCustom && (
                 <Field
-                  label="Custom endpoint (optional)"
+                  label={t('settings.customEndpoint')}
                   htmlFor="sp-base"
-                  hint="Any OpenAI-compatible base URL, e.g. http://localhost:11434/v1. Enabled by this server's owner."
+                  hint={t('settings.customEndpointHint')}
                 >
                   <input
                     id="sp-base"
@@ -266,48 +274,46 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
                 </Field>
               )}
 
-              <div className="flex gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-300">
-                <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+              <div className="flex gap-3 rounded-xl border border-line bg-inset p-3 text-sm text-muted">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-success-fg" aria-hidden="true" />
                 <p>
-                  Your key is saved only in this browser. It is sent with each request through this app&apos;s
-                  server to {preset.label}, and the server never stores or logs it. Prefer a key with a spending
-                  limit, and press <span className="font-medium text-slate-100">Forget key</span> on shared
-                  devices.
+                  {rich(t('settings.privacy'), {
+                    provider: preset.label,
+                    forget: <span className="font-medium text-fg">{t('settings.forget')}</span>,
+                  })}
                 </p>
               </div>
 
               {!persisted && (
-                <p className="text-sm text-amber-300">
-                  Your browser blocked local storage, so the key only lasts until you close this tab.
-                </p>
+                <p className="text-sm text-warn-fg">{t('settings.storageBlocked')}</p>
               )}
               {notice && (
-                <p role="status" className="text-sm text-emerald-300">
+                <p role="status" className="text-sm text-success-fg">
                   {notice}
                 </p>
               )}
               {error && (
-                <p role="alert" className="text-sm text-red-300">
+                <p role="alert" className="text-sm text-danger-fg">
                   {error}
                 </p>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-slate-800 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 type="button"
                 onClick={forget}
                 disabled={!saved?.apiKey && !draft.apiKey}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+                className="-ml-3 flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium text-danger-fg transition hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <TrashIcon />
-                Forget key
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                {t('settings.forget')}
               </button>
               <button
                 type="submit"
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
+                className="btn-primary px-6 text-sm"
               >
-                Save
+                {t('settings.save')}
               </button>
             </div>
           </form>
@@ -330,11 +336,11 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-slate-200">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium">
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-muted">{hint}</p>}
     </div>
   );
 }
@@ -342,8 +348,8 @@ function Field({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-2.5">
-      <dt className="text-slate-400">{label}</dt>
-      <dd className="truncate font-mono text-xs text-brand-300">{value}</dd>
+      <dt className="text-muted">{label}</dt>
+      <dd className="truncate font-mono text-xs text-accent-fg-strong">{value}</dd>
     </div>
   );
 }

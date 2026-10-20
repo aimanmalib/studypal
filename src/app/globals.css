@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme {
   /* Brand accent (orange). */
@@ -19,21 +19,148 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+/*
+ * Semantic colour tokens. Components use these (bg-surface, text-muted,
+ * border-line...), never raw palette colours, so both themes stay in step.
+ * Text pairs are WCAG AA (>= 4.5:1); contrast table in the README.
+ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-inset: var(--inset);
+  --color-card-back: var(--card-back);
+  --color-line: var(--line);
+  --color-line-field: var(--line-field);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-fg-strong: var(--accent-fg-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-success-fg: var(--success-fg);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-warn-fg: var(--warn-fg);
+  --color-dot-ok: var(--dot-ok);
+  --color-dot-warn: var(--dot-warn);
+  --color-ring: var(--ring);
+}
+
+/* Dark (default, and the original StudyPal look). */
 :root {
-  --app-bg: #020617;
-  --app-surface: #1e293b;
-  --app-text: #f8fafc;
+  --bg: #020617;
+  --surface: #1e293b;
+  --surface-2: #334155;
+  --inset: #0f172a;
+  --card-back: #334155;
+  --line: #334155;
+  --line-field: #64748b;
+  --fg: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #c2410c;
+  --accent-hover: #a8380a;
+  --on-accent: #ffffff;
+  --accent-fg: #fb923c;
+  --accent-fg-strong: #fdba74;
+  --accent-soft: rgb(249 115 22 / 0.1);
+  --accent-line: rgb(249 115 22 / 0.35);
+  --success-fg: #6ee7b7;
+  --success-soft: rgb(16 185 129 / 0.12);
+  --success-line: #10b981;
+  --danger-fg: #fca5a5;
+  --danger-soft: rgb(127 29 29 / 0.35);
+  --danger-line: rgb(185 28 28 / 0.6);
+  --warn-fg: #fcd34d;
+  --dot-ok: #34d399;
+  --dot-warn: #fbbf24;
+  --ring: #fb923c;
+  --shadow-card: none;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
+/* Light: chosen with the toggle, or by the OS when nothing is chosen (also without JavaScript). */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --inset: #f1f5f9;
+    --card-back: #fff7ed;
+    --line: #e2e8f0;
+    --line-field: #7c8ba1;
+    --fg: #0f172a;
+    --muted: #475569;
+    --accent: #c2410c;
+    --accent-hover: #9a3412;
+    --on-accent: #ffffff;
+    --accent-fg: #c2410c;
+    --accent-fg-strong: #9a3412;
+    --accent-soft: #fff7ed;
+    --accent-line: #fdba74;
+    --success-fg: #047857;
+    --success-soft: #ecfdf5;
+    --success-line: #10b981;
+    --danger-fg: #b91c1c;
+    --danger-soft: #fef2f2;
+    --danger-line: #fca5a5;
+    --warn-fg: #92400e;
+    --dot-ok: #059669;
+    --dot-warn: #d97706;
+    --ring: #c2410c;
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    color-scheme: light;
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --inset: #f1f5f9;
+  --card-back: #fff7ed;
+  --line: #e2e8f0;
+  --line-field: #7c8ba1;
+  --fg: #0f172a;
+  --muted: #475569;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --on-accent: #ffffff;
+  --accent-fg: #c2410c;
+  --accent-fg-strong: #9a3412;
+  --accent-soft: #fff7ed;
+  --accent-line: #fdba74;
+  --success-fg: #047857;
+  --success-soft: #ecfdf5;
+  --success-line: #10b981;
+  --danger-fg: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-line: #fca5a5;
+  --warn-fg: #92400e;
+  --dot-ok: #059669;
+  --dot-warn: #d97706;
+  --ring: #c2410c;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: light;
+}
+
 @layer base {
-  /* Tailwind v4 defaults borders to currentcolor; keep the v3 look. */
+  /* Tailwind v4 defaults borders to currentcolor; use the theme's line colour. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-slate-700, currentcolor);
+    border-color: var(--line, currentcolor);
   }
 
   html {
@@ -41,24 +168,135 @@
   }
 
   body {
-    background: var(--app-bg);
-    color: var(--app-text);
+    background: var(--bg);
+    color: var(--fg);
     font-family: var(--font-sans);
+  }
+
+  ::placeholder {
+    color: var(--muted);
+    opacity: 1;
   }
 
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+
+  /* One visible focus style for every keyboard-reachable control. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Text inputs, textareas and selects. */
+@utility field {
+  border-radius: 0.75rem;
+  border: 1px solid var(--line-field);
+  background-color: var(--surface);
+  color: var(--fg);
+  min-height: 2.75rem;
+  transition: border-color 150ms;
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 0;
+    border-color: var(--ring);
+  }
+}
+
+/* Primary action (white on orange-700: 5.2:1). */
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  transition: background-color 150ms;
+  &:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+/* Secondary action on a surface. */
+@utility btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  color: var(--fg);
+  font-weight: 500;
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+  &:hover:not(:disabled) {
+    background-color: var(--surface-2);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+/* Square 44 px icon button (touch target). */
+@utility icon-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: var(--muted);
+  transition:
+    background-color 150ms,
+    color 150ms;
+  &:hover:not(:disabled) {
+    background-color: var(--surface-2);
+    color: var(--fg);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+@utility card {
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 
 @utility gradient-border {
   border: 1px solid transparent;
   background-image:
-    linear-gradient(var(--app-surface), var(--app-surface)),
+    linear-gradient(var(--surface), var(--surface)),
     linear-gradient(135deg, #f97316, #fb923c, #fdba74);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+}
+
+/* Native selects render grey in WebKit; draw our own chevron instead. */
+@utility select-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 /* Streaming cursor */
@@ -74,8 +312,9 @@
 
 .streaming-cursor::after {
   content: '\2588';
+  margin-left: 0.25rem;
   animation: blink 1s infinite;
-  color: var(--color-brand-500);
+  color: var(--accent-fg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -87,21 +326,29 @@
 /* Markdown answers */
 .prose-study {
   overflow-wrap: anywhere;
+  line-height: 1.65;
 }
 .prose-study > :last-child {
   margin-bottom: 0;
 }
 .prose-study h1 {
-  @apply mb-3 text-xl font-bold text-brand-400;
+  @apply mt-1 mb-3 text-xl font-bold text-accent-fg;
 }
 .prose-study h2 {
-  @apply mb-2 text-lg font-semibold text-brand-300;
+  @apply mt-4 mb-2 text-lg font-semibold text-accent-fg-strong;
 }
 .prose-study h3 {
-  @apply mb-2 text-base font-medium text-brand-200;
+  @apply mt-3 mb-2 text-base font-semibold text-fg;
+}
+.prose-study h2:first-child,
+.prose-study h3:first-child {
+  @apply mt-0;
 }
 .prose-study p {
-  @apply mb-3 leading-relaxed;
+  @apply mb-3;
+}
+.prose-study strong {
+  @apply font-semibold text-fg;
 }
 .prose-study ul {
   @apply mb-3 list-disc space-y-1 pl-5;
@@ -109,31 +356,31 @@
 .prose-study ol {
   @apply mb-3 list-decimal space-y-1 pl-5;
 }
+.prose-study li::marker {
+  color: var(--accent-fg);
+}
 .prose-study a {
-  @apply text-brand-400 underline underline-offset-2;
+  @apply text-accent-fg underline underline-offset-2;
 }
 .prose-study code {
-  @apply rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[0.85em] text-brand-300;
+  @apply rounded bg-inset px-1.5 py-0.5 font-mono text-[0.85em] text-accent-fg-strong;
 }
 .prose-study pre {
-  @apply mb-3 overflow-x-auto rounded-lg bg-slate-900 p-3;
+  @apply mb-3 overflow-x-auto rounded-lg bg-inset p-3;
 }
 .prose-study pre code {
-  @apply bg-transparent p-0 text-slate-200;
+  @apply bg-transparent p-0 text-fg;
 }
 .prose-study blockquote {
-  @apply border-l-4 border-brand-500 pl-4 text-slate-300 italic;
+  @apply border-l-4 border-accent-line pl-4 text-muted italic;
+}
+.prose-study hr {
+  @apply my-4 border-line;
 }
 .prose-study table {
   @apply mb-3 block overflow-x-auto;
 }
-
-/* Native selects render grey in WebKit; draw our own chevron instead. */
-@utility select-field {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
+.prose-study th,
+.prose-study td {
+  @apply border border-line px-2 py-1 text-left;
 }
