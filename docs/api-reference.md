@@ -66,10 +66,21 @@ A failure after streaming started arrives as
 
 ## Routes
 
+### Answer language
+
+Every POST route accepts an optional `language`: `"en"` (default) or `"ms"`
+(Bahasa Melayu; tags such as `"ms-MY"` are accepted too, anything else means
+English). The server appends a language rule to the system prompt
+(`systemPrompt()` in `src/lib/prompts.ts`); for `"ms"` it asks for standard
+Malaysian Malay rather than Indonesian. Flashcards, quizzes and summaries repeat
+the rule in the user turn. JSON keys, difficulty values and option letters stay
+in English so the parsers keep working. Error messages stay in English; the UI
+translates them by `code`.
+
 ### `POST /api/chat`
 
 ```json
-{ "messages": [{ "role": "user", "content": "..." }], "topic": "optional, max 200 chars" }
+{ "messages": [{ "role": "user", "content": "..." }], "topic": "optional, max 200 chars", "language": "en" }
 ```
 
 Roles are `user` or `assistant`; each message is at most 8,000 characters and
@@ -78,7 +89,7 @@ only the latest 40 messages are sent to the model. Response: SSE.
 ### `POST /api/flashcards`
 
 ```json
-{ "topic": "Machine Learning", "count": 8, "difficulty": "mixed" }
+{ "topic": "Machine Learning", "count": 8, "difficulty": "mixed", "language": "en" }
 ```
 
 `count` is clamped to 1–20; `difficulty` is `easy`, `medium`, `hard` or `mixed`.
@@ -96,7 +107,7 @@ only the latest 40 messages are sent to the model. Response: SSE.
 ### `POST /api/quiz`
 
 ```json
-{ "topic": "Calculus", "count": 5, "difficulty": "mixed" }
+{ "topic": "Calculus", "count": 5, "difficulty": "mixed", "language": "en" }
 ```
 
 `count` is clamped to 1–10. Questions without at least two options or with a
@@ -116,7 +127,7 @@ only the latest 40 messages are sent to the model. Response: SSE.
 ### `POST /api/summarize`
 
 ```json
-{ "content": "text to summarize (max 30,000 characters)", "topic": "optional" }
+{ "content": "text to summarize (max 30,000 characters)", "topic": "optional", "language": "ms" }
 ```
 
 Response: SSE.
