@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**[Live demo →](https://studypal-pearl.vercel.app)** (bring your own key: open **Settings**, pick a provider and paste your API key)
+**Live demo:** being redeployed with this version (bring your own API key). Until then, the screenshots below show the current build, and you can [run it locally](#development).
 
 <table>
   <tr>
@@ -148,7 +148,8 @@ Import the repository in Vercel, or run `npx vercel --prod`. With no environment
 ## Development
 
 ```bash
-npm run dev         # dev server
+npm ci              # install
+npm run dev         # http://localhost:3000, then add your key in Settings
 npm test            # Jest: provider layer, API routes, settings UI, translations
 npm run lint        # ESLint (eslint-config-next)
 npm run typecheck   # tsc --noEmit
