@@ -43,5 +43,10 @@
   },
   "engines": {
     "node": ">=20.9.0"
+  },
+  "overrides": {
+    "js-yaml@3": {
+      "argparse": "^2.0.1"
+    }
   }
 }
