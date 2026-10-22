@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Live demo:** being redeployed with this version (bring your own API key). Until then, the screenshots below show the current build, and you can [run it locally](#development).
+**[Live demo →](https://studypal-pearl.vercel.app)** (bring your own API key: open **Settings**, pick a provider and paste a key; it stays in your browser)
 
 <table>
   <tr>
