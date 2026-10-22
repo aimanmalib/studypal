@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use studypal, please cite it as below."
+title: "StudyPal: an AI study assistant in English and Bahasa Melayu"
+type: software
+authors:
+  - given-names: Muhammad
+    family-names: Aiman
+version: 1.1.0
+license: MIT
+repository-code: "https://github.com/aimanmalib/studypal"
+abstract: >-
+  A Next.js study assistant with streaming chat, flashcards, quizzes and study summaries on any OpenAI-compatible model, with a bilingual (Bahasa Melayu and English) interface and AI output in the chosen language.
