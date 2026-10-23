@@ -196,6 +196,16 @@ src/
 tests/                             # Jest
 ```
 
+## How this was built
+
+studypal was built with AI coding assistance (Claude Code) under the direction of its author, Muhammad Aiman.
+
+The evidence that it works is meant to be checkable:
+
+- The test suite, run with `npm test`.
+- CI on Node 20 and 22 for every pull request.
+- A live demo at https://studypal-pearl.vercel.app.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
