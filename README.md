@@ -32,11 +32,11 @@ StudyPal talks to any endpoint that speaks the OpenAI `/chat/completions` protoc
 
 | Feature | What it does | Response |
 |---------|--------------|----------|
-| 💬 **Chat** | Ask questions; answers explain step by step and render Markdown | SSE stream |
-| 📇 **Flashcards** | Generate 5–15 cards on a topic, flip through them, mark cards as mastered | JSON |
-| 📝 **Quiz** | Five multiple-choice questions with explanations and a score | JSON |
-| 📋 **Summarize** | Paste up to 30,000 characters and get a structured study summary | SSE stream |
-| 📊 **Stats** | The provider and model in use, plus the token usage your provider reported in this tab | Client-side |
+| **Chat** | Ask questions; answers explain step by step and render Markdown | SSE stream |
+| **Flashcards** | Generate 5–15 cards on a topic, flip through them, mark cards as mastered | JSON |
+| **Quiz** | Five multiple-choice questions with explanations and a score | JSON |
+| **Summarize** | Paste up to 30,000 characters and get a structured study summary | SSE stream |
+| **Stats** | The provider and model in use, plus the token usage your provider reported in this tab | Client-side |
 
 ### English and Bahasa Melayu
 
