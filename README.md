@@ -156,7 +156,7 @@ npm run typecheck   # tsc --noEmit
 npm run build       # production build
 ```
 
-Requires Node.js 20.9 or newer.
+Requires Node.js 22.12 or newer.
 
 ## Tech stack
 
@@ -203,7 +203,7 @@ studypal was built with AI coding assistance (Claude Code) under the direction o
 The evidence that it works is meant to be checkable:
 
 - The test suite, run with `npm test`.
-- CI on Node 20 and 22 for every pull request.
+- CI on Node 22 and 24 for every pull request.
 - A live demo at https://studypal-pearl.vercel.app.
 
 ## Security

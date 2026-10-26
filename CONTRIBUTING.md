@@ -32,7 +32,7 @@ key (bring-your-own-key mode).
    ```
 4. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
    (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `ci:`).
-5. Open a pull request against `main`. CI runs on Node 20 and 22.
+5. Open a pull request against `main`. CI runs on Node 22 and 24.
 
 ## Adding an LLM provider
 
