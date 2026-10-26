@@ -42,7 +42,7 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.12.0"
   },
   "overrides": {
     "js-yaml@3": {
