@@ -1,32 +1,27 @@
-# StudyPal
+<p align="center"><img src="https://raw.githubusercontent.com/aimanmalib/studypal/main/brand/logo-512.png" width="112" height="112" alt="StudyPal"></p>
 
-> **Open-source AI study assistant for any OpenAI-compatible LLM**
->
-> Chat, flashcards, quizzes and study summaries, with streaming answers, in **English or Bahasa Melayu**. Bring your own API key, or self-host with a server key.
+<h1 align="center">StudyPal</h1>
 
-[![CI](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml/badge.svg)](https://github.com/aimanmalib/studypal/actions/workflows/ci.yml)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+<p align="center"><a href="https://github.com/aimanmalib/studypal/actions/workflows/ci.yml"><img src="https://github.com/aimanmalib/studypal/actions/workflows/ci.yml/badge.svg" alt="CI"></a> <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black.svg" alt="Next.js 16"></a> <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-blue.svg" alt="TypeScript"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a></p>
 
-**[Live demo →](https://studypal-pearl.vercel.app)** (bring your own API key: open **Settings**, pick a provider and paste a key; it stays in your browser)
+<p align="center"><b>Open-source AI study assistant for any OpenAI-compatible LLM.</b> · <i>Pembantu belajar AI sumber terbuka untuk mana-mana LLM serasi OpenAI.</i><br>
+<a href="https://studypal-pearl.vercel.app">Live demo</a> · <a href="docs/api-reference.md">API reference</a> · Built in Malaysia by <a href="https://aimanmalib.com">Aiman Malib</a></p>
+
+StudyPal gives you chat, flashcards, quizzes and study summaries, with streaming answers, in English or Bahasa Melayu. It talks to any endpoint that speaks the OpenAI `/chat/completions` protocol and ships presets for OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Mistral, Xiaomi MiMo, Ollama and llama.cpp. Bring your own API key, or self-host with a server key. The [live demo](https://studypal-pearl.vercel.app) runs in bring-your-own-key mode: open **Settings**, pick a provider and paste a key; it stays in your browser.
+
+[Bahasa Melayu ↓](#bahasa-melayu)
 
 <table>
   <tr>
-    <td width="60%"><img src="docs/screenshots/quiz-en-dark.png" alt="A quiz question with its explanation, dark theme"></td>
-    <td width="40%"><img src="docs/screenshots/flashcard-en-iphone.png" alt="A flashcard answer on iPhone, light theme"></td>
+    <td width="60%"><img src="https://raw.githubusercontent.com/aimanmalib/studypal/main/docs/screenshots/quiz-en-dark.png" alt="A quiz question with its explanation, dark theme"></td>
+    <td width="40%"><img src="https://raw.githubusercontent.com/aimanmalib/studypal/main/docs/screenshots/flashcard-en-iphone.png" alt="A flashcard answer on iPhone, light theme"></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/summary-bm-light.png" alt="A study summary written in Bahasa Melayu, light theme"></td>
-    <td><img src="docs/screenshots/settings-bm-iphone-dark.png" alt="The bring-your-own-key settings panel in Bahasa Melayu on iPhone"></td>
+    <td><img src="https://raw.githubusercontent.com/aimanmalib/studypal/main/docs/screenshots/summary-bm-light.png" alt="A study summary written in Bahasa Melayu, light theme"></td>
+    <td><img src="https://raw.githubusercontent.com/aimanmalib/studypal/main/docs/screenshots/settings-bm-iphone-dark.png" alt="The bring-your-own-key settings panel in Bahasa Melayu on iPhone"></td>
   </tr>
 </table>
 <sub>Screenshots taken in Safari/WebKit (desktop and iPhone 13). The quiz, flashcard and summary text is real model output.</sub>
-
-
-StudyPal talks to any endpoint that speaks the OpenAI `/chat/completions` protocol. It ships presets for OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Mistral, Xiaomi MiMo, Ollama and llama.cpp.
-
----
 
 ## Features
 
@@ -210,13 +205,37 @@ The evidence that it works is meant to be checkable:
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 
-## License
+## Bahasa Melayu
+
+StudyPal ialah pembantu belajar AI sumber terbuka: sembang, kad imbas, kuiz dan ringkasan nota, dengan jawapan distrim, dalam Bahasa Melayu atau Inggeris. Ia bercakap dengan mana-mana titik akhir yang mengikut protokol OpenAI `/chat/completions`, dengan pratetap untuk OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Mistral, Xiaomi MiMo, Ollama dan llama.cpp.
+
+- **Sembang**: tanya soalan; jawapan diterangkan langkah demi langkah (strim SSE).
+- **Kad imbas**: jana 5 hingga 15 kad bagi satu topik, selak, dan tanda kad yang sudah dikuasai.
+- **Kuiz**: lima soalan aneka pilihan dengan penerangan dan markah.
+- **Ringkasan**: tampal sehingga 30,000 aksara dan dapatkan ringkasan belajar yang tersusun.
+- **Dwibahasa**: setiap skrin ada dalam BM dan EN (suis **EN / BM** di kepala). AI diarah menjawab dalam bahasa pilihan, dengan peraturan Bahasa Melayu Malaysia baku; sejauh mana ia dipatuhi bergantung pada model. Semua teks antara muka dalam `src/i18n/en.json` dan `src/i18n/ms.json`.
+- **Tema cerah dan gelap**, warna teks memenuhi WCAG AA dalam kedua-dua tema.
+
+**Dua cara menjalankannya**
+
+1. **Bawa kunci sendiri** (demo langsung): buka **Tetapan**, pilih penyedia, tampal kunci API dan tekan **Simpan**. Kunci disimpan dalam pelayar anda sahaja dan dihantar ke penyedia yang anda pilih untuk satu permintaan itu; pelayan tidak menyimpan atau melognya. Guna kunci yang ada had perbelanjaan.
+2. **Hos sendiri dengan kunci pelayan**: bila persekitaran pelayan ada kunci, semua permintaan memakainya.
+
+```bash
+git clone https://github.com/aimanmalib/studypal.git
+cd studypal
+npm install
+cp .env.example .env.local   # pilih penyedia dan masukkan kuncinya
+npm run dev                  # http://localhost:3000
+```
+
+Perlukan Node.js 22.12 atau lebih baharu. Pemboleh ubah persekitaran, senarai penyedia, laluan API dan cara deploy ke Vercel ada dalam bahagian bahasa Inggeris di atas.
+
+## Licence
 
 MIT, see [LICENSE](LICENSE).
 
----
-
-Built by [Sasa Teguh](https://sasateguh.com) · Malaysia
+Made by [Aiman Malib](https://aimanmalib.com), Malaysia.
 
 ## Work with Sasa Teguh
 
