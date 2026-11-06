@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">StudyPal</title>
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1f26"/>
+      <stop offset="1" stop-color="#121418"/>
+    </linearGradient>
+  </defs>
+  <!-- ink tile shared with MyPII and Codr -->
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#tile)"/>
+  <rect x="17" y="17" width="222" height="222" rx="55" fill="none" stroke="url(#rim)" stroke-width="2"/>
+  <!-- mark: a stack of flashcards (the back one tilted) with a spark for the AI answer -->
+  <g transform="translate(-6 4)">
+  <rect x="58" y="82" width="124" height="90" rx="14" fill="none" stroke="#f4f4f1" stroke-width="10" opacity=".5" transform="rotate(-12 120 127)"/>
+  <rect x="74" y="100" width="124" height="90" rx="14" fill="#f4f4f1"/>
+  <rect x="94" y="128" width="64" height="11" rx="5.5" fill="#1c1f26"/>
+  <rect x="94" y="151" width="42" height="11" rx="5.5" fill="#1c1f26" opacity=".45"/>
+  </g>
+  <path d="M194 46 C197 64 202 69 220 72 C202 75 197 80 194 98 C191 80 186 75 168 72 C186 69 191 64 194 46 Z" fill="#e8b04a"/>
+</svg>
